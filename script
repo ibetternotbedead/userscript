@@ -1,4 +1,15 @@
-    const siteList = [
+// ==UserScript==
+// @name         TaskTime
+// @namespace    https://diligentrobots.io/
+// @version      1.0.0
+// @description  Overlay
+// @match        *://*/*
+// @grant        none
+// @updateURL    https://raw.githubusercontent.com/YOUR_USERNAME/userscripts/main/tasktime.user.js
+// @downloadURL  https://raw.githubusercontent.com/YOUR_USERNAME/userscripts/main/tasktime.user.js
+// ==/UserScript==
+
+const siteList = [
       {
         name: "Antelope Valley",
         number: "30",

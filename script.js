@@ -10,7 +10,6 @@
 
 // ==/UserScript==
 
-
 const siteList = [
   {
     name: "Antelope Valley",
@@ -1055,14 +1054,13 @@ async function main() {
 
 
 
-
   (() => {
     function createPodSelectionModal() {
       const modal = document.createElement("div");
       const overlay = document.createElement("div");
       const modalContent = document.createElement("div");
       const closeButton = document.createElement("button");
-
+  
       overlay.style.position = "fixed";
       overlay.style.top = "0";
       overlay.style.left = "0";
@@ -1073,16 +1071,16 @@ async function main() {
       overlay.style.display = "flex";
       overlay.style.alignItems = "center";
       overlay.style.justifyContent = "center";
-
+  
       modal.style.backgroundColor = COLORS.backgroundDarker;
       modal.style.padding = "20px";
       modal.style.borderRadius = "10px";
       modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
       modal.style.width = "300px";
       modal.style.textAlign = "center";
-
+  
       const infoText = document.createElement("p");
-      infoText.textContent = "Open all Mbot sites for:";
+      infoText.textContent = `Open all MBot sites for selected ${filterState.selectedPodType.toUpperCase()}:`;
       infoText.style.color = COLORS.white;
       infoText.style.marginBottom = "15px";
       infoText.style.fontFamily = "Arial, sans-serif";
@@ -1091,35 +1089,21 @@ async function main() {
       infoText.style.textShadow = "1px 1px 2px rgba(0, 0, 0, 0.5)";
       infoText.style.lineHeight = "1.5";
       modalContent.appendChild(infoText);
-
-      closeButton.textContent = "Close";
-      closeButton.style.backgroundColor = COLORS.black;
-      closeButton.style.color = COLORS.white;
-      closeButton.style.border = "none";
-      closeButton.style.borderRadius = "5px";
-      closeButton.style.cursor = "pointer";
-      closeButton.style.padding = "10px 15px";
-      closeButton.style.marginTop = "15px";
-      closeButton.style.transition = "background-color 0.3s";
-
-      closeButton.addEventListener("mouseover", () => {
-        closeButton.style.backgroundColor = "#515151";
-      });
-      closeButton.addEventListener("mouseout", () => {
-        closeButton.style.backgroundColor = COLORS.black;
-      });
-
-      const pods = [
-        { name: "Pod A", color: COLORS.primary },
-        { name: "Pod B", color: COLORS.primary },
-        { name: "Pod C", color: COLORS.primary },
-        { name: "Pod D", color: COLORS.primary },
-      ];
-
-      pods.forEach((pod) => {
+  
+      // Build site mapping dynamically
+      const siteMappings = siteList.reduce((acc, site) => {
+        const podName = site[filterState.selectedPodType];
+        if (!acc[podName]) acc[podName] = [];
+        acc[podName].push(site);
+        return acc;
+      }, {});
+  
+      const sortedPods = Object.keys(siteMappings).sort();
+  
+      sortedPods.forEach((pod) => {
         const button = document.createElement("button");
-        button.textContent = pod.name;
-        button.style.backgroundColor = pod.color;
+        button.textContent = pod;
+        button.style.backgroundColor = COLORS.primary;
         button.style.color = COLORS.white;
         button.style.border = "none";
         button.style.borderRadius = "5px";
@@ -1130,61 +1114,64 @@ async function main() {
         button.style.transition = "background-color 0.3s";
         button.style.fontSize = "16px";
         button.style.fontWeight = "bold";
-
+  
         button.addEventListener("mouseover", () => {
           button.style.opacity = "0.9";
         });
         button.addEventListener("mouseout", () => {
           button.style.opacity = "1";
         });
-
+  
         button.addEventListener("click", () => {
-          openMBOTForPod(pod.name);
+          openMBOTForPod(pod, siteMappings[pod]);
           document.body.removeChild(overlay);
         });
-
+  
         modalContent.appendChild(button);
       });
-
+  
+      closeButton.textContent = "Close";
+      closeButton.style.backgroundColor = COLORS.black;
+      closeButton.style.color = COLORS.white;
+      closeButton.style.border = "none";
+      closeButton.style.borderRadius = "5px";
+      closeButton.style.cursor = "pointer";
+      closeButton.style.padding = "10px 15px";
+      closeButton.style.marginTop = "15px";
+  
       closeButton.addEventListener("click", () => {
         document.body.removeChild(overlay);
       });
-
-      closeButton.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          document.body.removeChild(overlay);
-        }
-      });
-
+  
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay) {
           document.body.removeChild(overlay);
         }
       });
-
+  
       window.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           document.body.removeChild(overlay);
         }
       });
-
+  
       modalContent.appendChild(closeButton);
       modal.appendChild(modalContent);
       overlay.appendChild(modal);
       document.body.appendChild(overlay);
     }
-
-    function openMBOTForPod(podName) {
+  
+    function openMBOTForPod(podName, sitesForPod) {
       const baseMbotUrl = "https://sitexx.diligentrobots.io/app/mbot";
-      const siteMapping = siteMappings[podName];
-      if (siteMapping) {
-        siteMapping.forEach((site) => {
+  
+      if (sitesForPod && Array.isArray(sitesForPod)) {
+        sitesForPod.forEach((site) => {
           const siteNumber = site.number;
           if (siteNumber) {
             window.open(
               baseMbotUrl.replace("xx", siteNumber),
               "_blank",
-              "noopener,noreferrer,width=800,height=600",
+              "noopener,noreferrer,width=800,height=600"
             );
           } else {
             console.error(`Site number not found for site name: ${site.name}`);
@@ -1192,8 +1179,9 @@ async function main() {
         });
       }
     }
-
-    (function () {
+  
+    // SIDEBAR BUTTONS
+    function insertSidebarLinks() {
       function createButton(text, url, onClick) {
         const button = document.createElement("button");
         button.textContent = text;
@@ -1210,14 +1198,14 @@ async function main() {
         button.style.alignItems = "center";
         button.style.justifyContent = "center";
         button.style.transition = "background-color 0.3s";
-
+  
         button.addEventListener("mouseover", () => {
           button.style.backgroundColor = "#515151";
         });
         button.addEventListener("mouseout", () => {
           button.style.backgroundColor = COLORS.backgroundDarker;
         });
-
+  
         if (onClick) {
           button.addEventListener("click", onClick);
         } else if (url) {
@@ -1225,10 +1213,10 @@ async function main() {
             window.open(url, "_blank", "noopener,noreferrer");
           });
         }
-
+  
         return button;
       }
-
+  
       const buttonConfig = [
         { label: "All Mbot for Pod:", onClick: createPodSelectionModal },
         {
@@ -1252,9 +1240,9 @@ async function main() {
           url: "https://docs.google.com/spreadsheets/d/1QBRl09EXI7lTIgEuPoGXlo6VBzPPFHLnVk-4JE6p5kg/edit?gid=1844596694#gid=1844596694",
         },
       ];
-
+  
       const activityLink = document.querySelector(
-        '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]',
+        '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]'
       );
       if (activityLink) {
         const container = document.createElement("div");
@@ -1262,27 +1250,34 @@ async function main() {
         container.style.flexWrap = "wrap";
         container.style.gap = "8px";
         container.style.marginTop = "12px";
-
+  
         buttonConfig.forEach(({ label, url, onClick }) => {
           const button = createButton(label, url, onClick);
           container.appendChild(button);
         });
-
-        const parent = activityLink.parentElement;
-        parent.appendChild(container);
+  
+        activityLink.parentElement.appendChild(container);
       } else {
         console.warn("Activity link not found — cannot insert custom buttons.");
       }
-    })();
-
-    const observer = new MutationObserver(() => {
-      applyAllFilters();
-    });
-
+    }
+  
+    // Inject UI elements
+    insertSidebarLinks();
+    createControlBarUI(); // This includes pod selector + pod buttons + TS button
+  
+    // Reapply filters on table change
     const table = document.querySelector("table");
-    observer.observe(table, { childList: true, subtree: true });
+    if (table) {
+      const observer = new MutationObserver(() => {
+        applyAllFilters();
+      });
+      observer.observe(table, { childList: true, subtree: true });
+    }
   })();
+  
 }
+  
 
 
 
@@ -1601,6 +1596,28 @@ setTimeout(() => {
   });
 }, 3000);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

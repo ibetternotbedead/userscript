@@ -7,6 +7,7 @@
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script
 // @downloadURL  https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script
+
 // ==/UserScript==
 
 

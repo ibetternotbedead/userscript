@@ -5,8 +5,8 @@
 // @description  Overlay
 // @match        https://fleet.diligentrobots.io/static/robodash/activity/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script
-// @downloadURL  https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script
+// @updateURL    https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script.js
+// @downloadURL  https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script.js
 
 // ==/UserScript==
 

@@ -3,7 +3,7 @@
 // @namespace    https://diligentrobots.io/
 // @version      1.0.0
 // @description  Overlay
-// @match        https://fleet.diligentrobots.io/static/robodash/activity/*
+// @match        https://fleet.diligentrobots.io/static/robodash/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script.js
 // @downloadURL  https://raw.githubusercontent.com/ibetternotbedead/userscript/main/script.js

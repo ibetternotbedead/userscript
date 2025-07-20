@@ -292,22 +292,18 @@ const siteList = [
   },
 ];
 
-
 const COLORS = {
-primary: "#39a3b6",       
-backgroundDark: "#343a40",
-backgroundDarker: "#2e2e2e",
-white: "#ffffff",
-black: "#000000",
-warning: "#fff700",      
-failure: "#ff0000",        
-safe: "#17ff5d",       
-secondary: "#22616d",          
-risk: "#ff7708",     
+  primary: "#39a3b6",
+  backgroundDark: "#343a40",
+  backgroundDarker: "#2e2e2e",
+  white: "#ffffff",
+  black: "#000000",
+  warning: "#fff700",
+  failure: "#ff0000",
+  safe: "#17ff5d",
+  secondary: "#22616d",
+  risk: "#ff7708",
 };
-
-
-
 
 let ElevatorRobotIds = new Set();
 let RobotData = new Map();
@@ -315,7 +311,7 @@ let busyRobotsArray = [];
 let behaviorTimerMap = new Map();
 let HardwareEstopRobots = new Set();
 const actionTypeMap = new Map();
-const timerMap = new Map(); 
+const timerMap = new Map();
 
 const siteMappings = siteList.reduce((acc, site) => {
   if (!acc[site.pod]) acc[site.pod] = [];
@@ -326,10 +322,9 @@ const siteMappings = siteList.reduce((acc, site) => {
 const filterState = {
   activePods: new Set(),
   tsOnly: false,
-  selectedPodType: "3pod",  // default pod view
-  siteMappings: {},         // gets rebuilt dynamically
+  selectedPodType: "3pod",
+  siteMappings: {},
 };
-
 
 const theadRow = document.querySelector("thead tr");
 
@@ -396,24 +391,24 @@ function updateTableColors() {
           const timerInfo = behaviorTimerMap.get(robotId);
 
           if (currentType === "takeelevator") {
-            ddButton.style.backgroundColor = COLORS.white; // COLORS.white
-            ddButton.style.color = COLORS.black; // COLORS.black
+            ddButton.style.backgroundColor = COLORS.white;
+            ddButton.style.color = COLORS.black;
           } else if (timerInfo && timerInfo.type === currentType) {
             const elapsedTime = Date.now() - timerInfo.timestamp;
 
             if (elapsedTime > 600000) {
-              ddButton.style.backgroundColor = COLORS.risk; // yellow
+              ddButton.style.backgroundColor = COLORS.risk;
               ddButton.style.color = COLORS.black;
             } else {
-              ddButton.style.backgroundColor = COLORS.backgroundDark; // default dark
+              ddButton.style.backgroundColor = COLORS.backgroundDark;
               ddButton.style.color = COLORS.white;
             }
           } else {
-            ddButton.style.backgroundColor = COLORS.backgroundDark; // default
+            ddButton.style.backgroundColor = COLORS.backgroundDark;
             ddButton.style.color = COLORS.white;
           }
         } else {
-          ddButton.style.backgroundColor = COLORS.backgroundDark; // fallback
+          ddButton.style.backgroundColor = COLORS.backgroundDark;
           ddButton.style.border = "none";
           ddButton.style.color = COLORS.white;
         }
@@ -426,11 +421,14 @@ async function fetchRobotData(sessionId) {
   const payload = { sessionId };
 
   try {
-    const response = await fetch("https://apps.diligentrobots.io:5001/asyncCall", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const response = await fetch(
+      "https://apps.diligentrobots.io:5001/asyncCall",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
 
     const data = await response.json();
     console.log(data);
@@ -471,7 +469,7 @@ async function fetchRobotData(sessionId) {
         const isLoaded =
           containersState &&
           Object.values(containersState).some(
-            (container) => container.status === "LOADED"
+            (container) => container.status === "LOADED",
           );
 
         if (isLoaded && taskStatus === "IDLE") {
@@ -537,8 +535,6 @@ async function fetchRobotData(sessionId) {
   }
 }
 
-
-
 function updateSocValues() {
   const rows = document.querySelectorAll("tbody tr");
 
@@ -555,7 +551,9 @@ function updateSocValues() {
         wrapper.style.display = "flex";
         wrapper.style.alignItems = "center";
         wrapper.style.justifyContent = "center";
-        row.insertBefore(wrapper, row.children[7] || null);
+        row.insertBefore(wrapper, row.children[3] || null);
+      } else {
+        row.insertBefore(wrapper, row.children[3] || null);
       }
 
       if (!auxSocElement) {
@@ -579,6 +577,7 @@ function updateSocValues() {
         display: "inline-block",
         textAlign: "center",
         lineHeight: "40px",
+        fontSize: "18px",
         fontWeight: "bold",
         color: COLORS.white,
         backgroundColor: "transparent",
@@ -597,14 +596,26 @@ function updateSocValues() {
           const auxSocPercent = auxSoc * 100;
           const fetchSocPercent = fetchSoc * 100;
 
-          const updateTextAndColor = (element, percent) => {
+          const updateTextAndColor = (element, percent, isAux) => {
             let color;
-            if (percent > 60) {
-              color = COLORS.safe;
-            } else if (percent >= 45) {
-              color = COLORS.warning;
+            if (isAux) {
+              // auxSoc color
+              if (percent > 50) {
+                color = COLORS.safe;
+              } else if (percent > 40) {
+                color = COLORS.warning;
+              } else {
+                color = COLORS.failure;
+              }
             } else {
-              color = COLORS.failure;
+              // fetchSoc color
+              if (percent > 75) {
+                color = COLORS.safe;
+              } else if (percent > 65) {
+                color = COLORS.warning;
+              } else {
+                color = COLORS.failure;
+              }
             }
 
             element.textContent = `${percent.toFixed(0)}%`;
@@ -626,20 +637,15 @@ function updateSocValues() {
     }
   });
 }
-      
 
 function getSiteNameFromRow(row) {
   const tdWithTitle = row.querySelector("td[title]");
   return tdWithTitle ? tdWithTitle.getAttribute("title") : "";
 }
 
-
-
-
 function applyAllFilters() {
   const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
 
-  // Rebuild siteMappings dynamically based on selectedPodType
   filterState.siteMappings = siteList.reduce((acc, site) => {
     const podName = site[filterState.selectedPodType];
     if (!acc[podName]) acc[podName] = [];
@@ -650,19 +656,16 @@ function applyAllFilters() {
   rows.forEach((row) => {
     const siteTitle = getSiteNameFromRow(row);
 
-    // If no pod filters active, allow all rows to match pod filter
     let matchesPod = filterState.activePods.size === 0;
 
-    // Otherwise check if the site's pod (under the selected pod type) matches any active pod filter
     for (const pod of filterState.activePods) {
       const sitesForPod = filterState.siteMappings[pod] || [];
-      if (sitesForPod.some(site => site.name === siteTitle)) {
+      if (sitesForPod.some((site) => site.name === siteTitle)) {
         matchesPod = true;
         break;
       }
     }
 
-    // Existing TS filtering logic (unchanged)
     let matchesTS = true;
     if (filterState.tsOnly) {
       const cells = row.querySelectorAll("td");
@@ -696,7 +699,7 @@ function applyAllFilters() {
           : 100;
 
         lowAux = aux < 40;
-        lowFetch = fetch < 60;
+        lowFetch = fetch < 65;
 
         const robotId = row
           .querySelector("td:nth-child(2)")
@@ -723,9 +726,10 @@ function applyAllFilters() {
       }
 
       const ddButton = row.querySelector(".button-container .dd-button");
-      const ddButtonIsRed =
-        ddButton &&
-        getComputedStyle(ddButton).backgroundColor === "rgb(255, 0, 0)";
+      const ddColor = ddButton && getComputedStyle(ddButton).backgroundColor;
+
+      const ddButtonIsRedOrOrange =
+        ddColor === "rgb(255, 0, 0)" || ddColor === "rgb(255, 119, 8)";
 
       matchesTS =
         thirdRed ||
@@ -735,27 +739,12 @@ function applyAllFilters() {
         lowAux ||
         lowFetch ||
         longSameAction ||
-        ddButtonIsRed;
+        ddButtonIsRedOrOrange;
     }
 
-    // Show or hide the row depending on both filters
     row.style.display = matchesPod && matchesTS ? "table-row" : "none";
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 async function main() {
   let sessionId = getSessionId();
@@ -769,11 +758,9 @@ async function main() {
   setInterval(() => fetchRobotData(sessionId), 5000);
   applyGlobalFailureHighlight();
 
-
   if (theadRow) {
-      CreateHeaderRow();
-    }
-    
+    CreateHeaderRow();
+  }
 
   function getSiteNameFromRow(row) {
     const tdWithTitle = row.querySelector("td[title]");
@@ -794,10 +781,7 @@ async function main() {
     btn.style.boxShadow = "0px 2px 5px rgba(0,0,0,0.3)";
   }
 
-
   highlightRows();
-
-    
 
   const observer = new MutationObserver(() => {
     applyAllFilters();
@@ -985,17 +969,78 @@ async function main() {
     });
   }
 
+  const spareBots = new Set([
+    "86",
+    "106",
+    "8",
+    "75",
+    "115",
+    "17",
+    "107",
+    "11",
+    "30",
+    "52",
+    "44",
+    "9",
+    "32",
+    "24",
+    "114",
+    "79",
+    "63",
+    "18",
+    "15",
+    "92",
+    "122",
+  ]);
+
+  function highlightSpareBots() {
+    const rows = document.querySelectorAll("tbody tr");
+
+    rows.forEach((row) => {
+      const td = row.querySelector("td:nth-child(3)");
+      const statusDiv = td?.querySelector(".d-flex");
+      if (!statusDiv) return;
+
+      const children = Array.from(statusDiv.childNodes);
+      const textNode = children.find(
+        (n) => n.nodeType === Node.TEXT_NODE && /\d+/.test(n.textContent),
+      );
+      if (!textNode) return;
+
+      const robotId = textNode.textContent.trim();
+      const isSpare = spareBots.has(robotId);
+
+      if (!statusDiv.querySelector(".robot-id-span")) {
+        const span = document.createElement("span");
+        span.className = "robot-id-span";
+        span.textContent = robotId;
+        span.style.fontWeight = "bold";
+
+        textNode.replaceWith(span);
+        if (isSpare) {
+          span.style.color = COLORS.primary;
+        }
+      } else {
+        const span = statusDiv.querySelector(".robot-id-span");
+        span.style.color = isSpecial ? COLORS.primary : "";
+      }
+    });
+  }
+
+  highlightSpareBots();
+
   addButtonsToRows();
 
   setInterval(addButtonsToRows, 5000);
+  setInterval(highlightSpareBots, 5000);
 
   function highlightRows() {
     const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
     rows.forEach((row) => {
       const cells = row.querySelectorAll("td");
       if (cells.length >= 4) {
-        const thirdCell = cells[2];
-        const fourthCell = cells[3];
+        const thirdCell = cells[3];
+        const fourthCell = cells[4];
 
         function processthirdCell(cell) {
           const timeText = cell.textContent.trim();
@@ -1046,13 +1091,8 @@ async function main() {
     });
   }
 
-
-
-
   highlightRows();
   setInterval(highlightRows, 5000);
-
-
 
   (() => {
     function createPodSelectionModal() {
@@ -1060,7 +1100,7 @@ async function main() {
       const overlay = document.createElement("div");
       const modalContent = document.createElement("div");
       const closeButton = document.createElement("button");
-  
+
       overlay.style.position = "fixed";
       overlay.style.top = "0";
       overlay.style.left = "0";
@@ -1071,14 +1111,14 @@ async function main() {
       overlay.style.display = "flex";
       overlay.style.alignItems = "center";
       overlay.style.justifyContent = "center";
-  
+
       modal.style.backgroundColor = COLORS.backgroundDarker;
       modal.style.padding = "20px";
       modal.style.borderRadius = "10px";
       modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
       modal.style.width = "300px";
       modal.style.textAlign = "center";
-  
+
       const infoText = document.createElement("p");
       infoText.textContent = `Open all MBot sites for selected ${filterState.selectedPodType.toUpperCase()}:`;
       infoText.style.color = COLORS.white;
@@ -1089,17 +1129,16 @@ async function main() {
       infoText.style.textShadow = "1px 1px 2px rgba(0, 0, 0, 0.5)";
       infoText.style.lineHeight = "1.5";
       modalContent.appendChild(infoText);
-  
-      // Build site mapping dynamically
+
       const siteMappings = siteList.reduce((acc, site) => {
         const podName = site[filterState.selectedPodType];
         if (!acc[podName]) acc[podName] = [];
         acc[podName].push(site);
         return acc;
       }, {});
-  
+
       const sortedPods = Object.keys(siteMappings).sort();
-  
+
       sortedPods.forEach((pod) => {
         const button = document.createElement("button");
         button.textContent = pod;
@@ -1114,22 +1153,22 @@ async function main() {
         button.style.transition = "background-color 0.3s";
         button.style.fontSize = "16px";
         button.style.fontWeight = "bold";
-  
+
         button.addEventListener("mouseover", () => {
           button.style.opacity = "0.9";
         });
         button.addEventListener("mouseout", () => {
           button.style.opacity = "1";
         });
-  
+
         button.addEventListener("click", () => {
           openMBOTForPod(pod, siteMappings[pod]);
           document.body.removeChild(overlay);
         });
-  
+
         modalContent.appendChild(button);
       });
-  
+
       closeButton.textContent = "Close";
       closeButton.style.backgroundColor = COLORS.black;
       closeButton.style.color = COLORS.white;
@@ -1138,32 +1177,32 @@ async function main() {
       closeButton.style.cursor = "pointer";
       closeButton.style.padding = "10px 15px";
       closeButton.style.marginTop = "15px";
-  
+
       closeButton.addEventListener("click", () => {
         document.body.removeChild(overlay);
       });
-  
+
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay) {
           document.body.removeChild(overlay);
         }
       });
-  
+
       window.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           document.body.removeChild(overlay);
         }
       });
-  
+
       modalContent.appendChild(closeButton);
       modal.appendChild(modalContent);
       overlay.appendChild(modal);
       document.body.appendChild(overlay);
     }
-  
+
     function openMBOTForPod(podName, sitesForPod) {
       const baseMbotUrl = "https://sitexx.diligentrobots.io/app/mbot";
-  
+
       if (sitesForPod && Array.isArray(sitesForPod)) {
         sitesForPod.forEach((site) => {
           const siteNumber = site.number;
@@ -1171,7 +1210,7 @@ async function main() {
             window.open(
               baseMbotUrl.replace("xx", siteNumber),
               "_blank",
-              "noopener,noreferrer,width=800,height=600"
+              "noopener,noreferrer,width=800,height=600",
             );
           } else {
             console.error(`Site number not found for site name: ${site.name}`);
@@ -1179,7 +1218,7 @@ async function main() {
         });
       }
     }
-  
+
     // SIDEBAR BUTTONS
     function insertSidebarLinks() {
       function createButton(text, url, onClick) {
@@ -1198,14 +1237,14 @@ async function main() {
         button.style.alignItems = "center";
         button.style.justifyContent = "center";
         button.style.transition = "background-color 0.3s";
-  
+
         button.addEventListener("mouseover", () => {
           button.style.backgroundColor = "#515151";
         });
         button.addEventListener("mouseout", () => {
           button.style.backgroundColor = COLORS.backgroundDarker;
         });
-  
+
         if (onClick) {
           button.addEventListener("click", onClick);
         } else if (url) {
@@ -1213,10 +1252,10 @@ async function main() {
             window.open(url, "_blank", "noopener,noreferrer");
           });
         }
-  
+
         return button;
       }
-  
+
       const buttonConfig = [
         { label: "All Mbot for Pod:", onClick: createPodSelectionModal },
         {
@@ -1240,9 +1279,9 @@ async function main() {
           url: "https://docs.google.com/spreadsheets/d/1QBRl09EXI7lTIgEuPoGXlo6VBzPPFHLnVk-4JE6p5kg/edit?gid=1844596694#gid=1844596694",
         },
       ];
-  
+
       const activityLink = document.querySelector(
-        '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]'
+        '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]',
       );
       if (activityLink) {
         const container = document.createElement("div");
@@ -1250,23 +1289,21 @@ async function main() {
         container.style.flexWrap = "wrap";
         container.style.gap = "8px";
         container.style.marginTop = "12px";
-  
+
         buttonConfig.forEach(({ label, url, onClick }) => {
           const button = createButton(label, url, onClick);
           container.appendChild(button);
         });
-  
+
         activityLink.parentElement.appendChild(container);
       } else {
         console.warn("Activity link not found — cannot insert custom buttons.");
       }
     }
-  
-    // Inject UI elements
+
     insertSidebarLinks();
-    createControlBarUI(); // This includes pod selector + pod buttons + TS button
-  
-    // Reapply filters on table change
+    createControlBarUI();
+
     const table = document.querySelector("table");
     if (table) {
       const observer = new MutationObserver(() => {
@@ -1275,375 +1312,307 @@ async function main() {
       observer.observe(table, { childList: true, subtree: true });
     }
   })();
-  
 }
-  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  function applyGlobalFailureHighlight() {
-    const style = document.createElement("style");
-    style.textContent = `
+function applyGlobalFailureHighlight() {
+  const style = document.createElement("style");
+  style.textContent = `
       .activity_tableRow__qiRKF:has(div[title*="FAILED"]) {
         --bs-table-bg: #701414 !important;
       }
     `;
-    document.head.appendChild(style);
-  }
-  
-  function CreateHeaderRow() {
-    const controlHeader = document.createElement("th");
-    const controlButton = document.createElement("button");
-    controlButton.className = "activity_tableHeadButton__uGLCO";
-    controlButton.textContent = "Controls";
-    controlHeader.appendChild(controlButton);
-    theadRow.insertBefore(controlHeader, theadRow.firstChild);
-  
-    const headers = theadRow.querySelectorAll("th");
-    const socHeader = document.createElement("th");
-    const socButton = document.createElement("button");
-    socButton.className = "activity_tableHeadButton__uGLCO";
-    socButton.textContent = "SOC";
-  
-    const arrowSpan = document.createElement("span");
-    arrowSpan.className = "activity_directionArrow__FSdXF";
-    arrowSpan.textContent = "↓";
-    socButton.appendChild(arrowSpan);
-  
-    socHeader.appendChild(socButton);
-    theadRow.insertBefore(socHeader, headers[7]);
-  }
-  
-  function highlightRows() {
-    const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
-    rows.forEach((row) => {
-      const cells = row.querySelectorAll("td");
-      if (cells.length >= 4) {
-        const thirdCell = cells[2];
-        const fourthCell = cells[3];
-  
-        function processCell(cell, thresholdRed, thresholdYellow) {
-          const timeText = cell.textContent.trim();
-          const minutesMatch = timeText.match(/^(\d+)(m)?$/);
-          if (minutesMatch) {
-            const minutes = parseInt(minutesMatch[1], 10);
-            if (minutes > thresholdRed) {
-              cell.style.color = COLORS.failure;
-            } else if (minutes > thresholdYellow) {
-              cell.style.color = COLORS.warning;
-            } else {
-              cell.style.color = "";
-            }
-            cell.style.fontWeight = "bold";
+  document.head.appendChild(style);
+}
+
+function CreateHeaderRow() {
+  const controlHeader = document.createElement("th");
+  const controlButton = document.createElement("button");
+  controlButton.className = "activity_tableHeadButton__uGLCO";
+  controlButton.textContent = "Controls";
+  controlHeader.appendChild(controlButton);
+  theadRow.insertBefore(controlHeader, theadRow.firstChild);
+
+  const headers = theadRow.querySelectorAll("th");
+  const socHeader = document.createElement("th");
+  const socButton = document.createElement("button");
+  socButton.className = "activity_tableHeadButton__uGLCO";
+  socButton.textContent = "SOC";
+
+  const arrowSpan = document.createElement("span");
+  arrowSpan.className = "activity_directionArrow__FSdXF";
+  arrowSpan.textContent = "↓";
+  socButton.appendChild(arrowSpan);
+
+  socHeader.appendChild(socButton);
+  theadRow.insertBefore(socHeader, headers[3]);
+}
+
+function highlightRows() {
+  const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length >= 4) {
+      const thirdCell = cells[2];
+      const fourthCell = cells[3];
+
+      function processCell(cell, thresholdRed, thresholdYellow) {
+        const timeText = cell.textContent.trim();
+        const minutesMatch = timeText.match(/^(\d+)(m)?$/);
+        if (minutesMatch) {
+          const minutes = parseInt(minutesMatch[1], 10);
+          if (minutes > thresholdRed) {
+            cell.style.color = COLORS.failure;
+          } else if (minutes > thresholdYellow) {
+            cell.style.color = COLORS.warning;
           } else {
             cell.style.color = "";
-            cell.style.fontWeight = "";
           }
+          cell.style.fontWeight = "bold";
+        } else {
+          cell.style.color = "";
+          cell.style.fontWeight = "";
         }
-  
-        processCell(thirdCell, 60, 30);
-        processCell(fourthCell, 20, 15);
       }
-    });
-  }
-  
-  function applyButtonStyles(btn) {
-    btn.style.zIndex = 9999;
-    btn.style.padding = "10px 20px";
-    btn.style.backgroundColor = COLORS.primary;
-    btn.style.color = COLORS.white;
-    btn.style.border = "none";
-    btn.style.borderRadius = "5px";
-    btn.style.cursor = "pointer";
-    btn.style.fontWeight = "bold";
-    btn.style.fontSize = "14px";
-    btn.style.boxShadow = "0px 2px 5px rgba(0,0,0,0.3)";
-  }
-  
-  
-  function createPodButton(podName, container) {
-    const button = document.createElement("button");
-    button.classList.add("pod-button");
-    button.textContent = podName;
-    applyButtonStyles(button);
-  
-    let isActive = false;
-  
-    button.addEventListener("click", () => {
-      isActive = !isActive;
-      if (isActive) {
-        filterState.activePods.add(podName);
-        button.style.backgroundColor = COLORS.secondary;
-        button.style.border = `2px solid ${COLORS.secondary}`;
-      } else {
-        filterState.activePods.delete(podName);
-        button.style.backgroundColor = COLORS.primary;
-        button.style.border = "none";
-      }
-      applyAllFilters();
-    });
-  
-    button.addEventListener("mouseover", () => {
-      if (!isActive) button.style.backgroundColor = COLORS.backgroundDark;
-    });
-  
-    button.addEventListener("mouseout", () => {
-      if (!isActive) button.style.backgroundColor = COLORS.primary;
-    });
-  
-    container.appendChild(button);
-  }
-  
-  function createPodButtonsFromStructure(container) {
-    const seenPods = new Set();
-    siteList.forEach((site) => {
-      const podName = site[filterState.selectedPodType];
-      if (podName && !seenPods.has(podName)) {
-        seenPods.add(podName);
-      }
-    });
-  
-    const pods = Array.from(seenPods).sort();
-    pods.forEach((pod) => createPodButton(pod, container));
-  }
-  
-  function createPodSelector(containerElement) {
-    const label = document.createElement("label");
-    label.textContent = "Pod Structure:";
-    label.style.marginRight = "6px";
-    label.style.color = COLORS.white;
-    label.style.fontWeight = "500";
-  
-    const select = document.createElement("select");
-    select.id = "pod-selector";
-    select.style.padding = "4px 8px";
-    select.style.border = `1px solid ${COLORS.primary}`;
-    select.style.borderRadius = "4px";
-    select.style.backgroundColor = COLORS.secondary;
-    select.style.color = COLORS.white;
-    select.style.fontSize = "0.9rem";
-    select.style.cursor = "pointer";
-    select.style.outline = "none";
-    select.style.boxShadow = `inset 0 1px 2px ${COLORS.black}`;
-  
-    ["3pod", "4pod", "5pod"].forEach((pod) => {
-      const option = document.createElement("option");
-      option.value = pod;
-      option.textContent = pod.toUpperCase();
-      select.appendChild(option);
-    });
-  
-    select.addEventListener("change", (e) => {
-      const selected = e.target.value;
-      filterState.selectedPodType = selected;
-      filterState.activePods.clear();
-  
-      containerElement.querySelectorAll(".pod-button").forEach((btn) => btn.remove());
-  
-      createPodButtonsFromStructure(containerElement);
-  
-      applyAllFilters();
-    });
-  
-    containerElement.appendChild(label);
-    containerElement.appendChild(select);
-  }
-  
-  function createTSButton(container) {
-    const button = document.createElement("button");
-    button.textContent = "TS";
-    button.classList.add("ts-button");
-  
-    // Use the shared styling
-    applyButtonStyles(button);
-  
-    // Remove position: fixed if it's inside a container
-    button.style.position = "static";
-  
-    button.addEventListener("click", () => {
-      filterState.tsOnly = !filterState.tsOnly;
-      button.style.backgroundColor = filterState.tsOnly ? COLORS.secondary : COLORS.primary;
-      button.style.border = filterState.tsOnly ? `2px solid ${COLORS.secondary}` : "none";
-      applyAllFilters();
-    });
-  
-    button.addEventListener("mouseover", () => {
-      if (!filterState.tsOnly) button.style.backgroundColor = COLORS.backgroundDark;
-    });
-  
-    button.addEventListener("mouseout", () => {
-      if (!filterState.tsOnly) button.style.backgroundColor = COLORS.primary;
-    });
-  
-    container.appendChild(button);
-  }
-  
-  
 
-
-
-  function createControlBarUI() {
-    // Remove the logout button and its parent column
-    const logoutCol = document.querySelector(".Header_header__1RJ5C .col-2.d-flex");
-    if (logoutCol) logoutCol.remove();
-  
-    // Create control bar wrapper
-    const controlBar = document.createElement("div");
-    controlBar.id = "control-bar";
-    controlBar.style.display = "flex";
-    controlBar.style.alignItems = "center";
-    controlBar.style.gap = "12px";
-    controlBar.style.padding = "6px 12px";
-    controlBar.style.backgroundColor = COLORS.backgroundDarker;
-    controlBar.style.border = `1px solid ${COLORS.secondary}`;
-    controlBar.style.borderRadius = "6px";
-    controlBar.style.boxShadow = "0 2px 4px rgba(0,0,0,0.4)";
-    controlBar.style.fontFamily = "inherit";
-    controlBar.style.fontSize = "0.9rem";
-    controlBar.style.flexWrap = "wrap";
-    controlBar.style.position = "absolute";
-    controlBar.style.top = "10px";
-    controlBar.style.right = "20px";
-    controlBar.style.zIndex = "1000";
-  
-    // Add controls
-    createPodSelector(controlBar);
-    createTSButton(controlBar);
-    createPodButtonsFromStructure(controlBar);
-  
-    // Append to header
-    const header = document.querySelector(".Header_header__1RJ5C");
-    if (header) header.appendChild(controlBar);
-  }
-  
-  
-  
-  
-  
-  
-  
-  
-function showNotification(message) {
-let container = document.getElementById("notification-container");
-if (!container) {
-  container = document.createElement("div");
-  container.id = "notification-container";
-  container.style.position = "fixed";
-  container.style.top = "100px";
-  container.style.left = "50%";
-  container.style.transform = "translateX(-50%)";
-  container.style.zIndex = "9999";
-  container.style.display = "flex";
-  container.style.flexDirection = "column";
-  container.style.alignItems = "center";
-  container.style.gap = "10px";
-  document.body.appendChild(container);
-}
-
-
-const notification = document.createElement("div");
-notification.innerText = message;
-
-
-Object.assign(notification.style, {
-  backgroundColor: "rgba(0, 0, 0, 0.8)",
-  color: COLORS.white,
-  padding: "10px 20px",
-  borderRadius: "5px",
-  minWidth: "200px",
-  textAlign: "center",
-  opacity: "1",
-  transition: "opacity 0.5s ease-in-out",
-  pointerEvents: "auto",
-});
-
-container.appendChild(notification);
-
-
-setTimeout(() => {
-  notification.style.opacity = "0";
-  notification.addEventListener("transitionend", () => {
-    notification.remove();
-
-
-    if (container.childElementCount === 0) {
-      container.remove();
+      processCell(thirdCell, 60, 30);
+      processCell(fourthCell, 20, 15);
     }
   });
-}, 3000);
 }
 
+function applyButtonStyles(btn) {
+  btn.style.zIndex = 9999;
+  btn.style.padding = "10px 20px";
+  btn.style.backgroundColor = COLORS.primary;
+  btn.style.color = COLORS.white;
+  btn.style.border = "none";
+  btn.style.borderRadius = "5px";
+  btn.style.cursor = "pointer";
+  btn.style.fontWeight = "bold";
+  btn.style.fontSize = "14px";
+  btn.style.boxShadow = "0px 2px 5px rgba(0,0,0,0.3)";
+}
 
+function createPodButton(podName, container) {
+  const button = document.createElement("button");
+  button.classList.add("pod-button");
+  button.textContent = podName;
+  applyButtonStyles(button);
 
+  let isActive = false;
 
+  button.addEventListener("click", () => {
+    isActive = !isActive;
+    if (isActive) {
+      filterState.activePods.add(podName);
+      button.style.backgroundColor = COLORS.secondary;
+      button.style.border = `2px solid ${COLORS.secondary}`;
+    } else {
+      filterState.activePods.delete(podName);
+      button.style.backgroundColor = COLORS.primary;
+      button.style.border = "none";
+    }
+    applyAllFilters();
+  });
 
+  button.addEventListener("mouseover", () => {
+    if (!isActive) button.style.backgroundColor = COLORS.backgroundDark;
+  });
 
+  button.addEventListener("mouseout", () => {
+    if (!isActive) button.style.backgroundColor = COLORS.primary;
+  });
 
+  container.appendChild(button);
+}
 
+function createPodButtonsFromStructure(container) {
+  const seenPods = new Set();
+  siteList.forEach((site) => {
+    const podName = site[filterState.selectedPodType];
+    if (podName && !seenPods.has(podName)) {
+      seenPods.add(podName);
+    }
+  });
 
+  const pods = Array.from(seenPods).sort();
+  pods.forEach((pod) => createPodButton(pod, container));
+}
 
+function createPodSelector(containerElement) {
+  const label = document.createElement("label");
+  label.textContent = "Pod Structure:";
+  label.style.marginRight = "6px";
+  label.style.color = COLORS.white;
+  label.style.fontWeight = "500";
 
+  const select = document.createElement("select");
+  select.id = "pod-selector";
+  select.style.padding = "4px 8px";
+  select.style.border = `1px solid ${COLORS.primary}`;
+  select.style.borderRadius = "4px";
+  select.style.backgroundColor = COLORS.secondary;
+  select.style.color = COLORS.white;
+  select.style.fontSize = "0.9rem";
+  select.style.cursor = "pointer";
+  select.style.outline = "none";
+  select.style.boxShadow = `inset 0 1px 2px ${COLORS.black}`;
 
+  ["3pod", "4pod", "5pod"].forEach((pod) => {
+    const option = document.createElement("option");
+    option.value = pod;
+    option.textContent = pod.toUpperCase();
+    select.appendChild(option);
+  });
 
+  select.addEventListener("change", (e) => {
+    const selected = e.target.value;
+    filterState.selectedPodType = selected;
+    filterState.activePods.clear();
 
+    containerElement
+      .querySelectorAll(".pod-button")
+      .forEach((btn) => btn.remove());
 
+    createPodButtonsFromStructure(containerElement);
 
+    applyAllFilters();
+  });
 
+  containerElement.appendChild(label);
+  containerElement.appendChild(select);
+}
 
+function createTSButton(container) {
+  const button = document.createElement("button");
+  button.textContent = "TS";
+  button.classList.add("ts-button");
 
+  // Use the shared styling
+  applyButtonStyles(button);
 
+  button.style.position = "static";
 
+  button.addEventListener("click", () => {
+    filterState.tsOnly = !filterState.tsOnly;
+    button.style.backgroundColor = filterState.tsOnly
+      ? COLORS.secondary
+      : COLORS.primary;
+    button.style.border = filterState.tsOnly
+      ? `2px solid ${COLORS.secondary}`
+      : "none";
+    applyAllFilters();
+  });
 
+  button.addEventListener("mouseover", () => {
+    if (!filterState.tsOnly)
+      button.style.backgroundColor = COLORS.backgroundDark;
+  });
 
+  button.addEventListener("mouseout", () => {
+    if (!filterState.tsOnly) button.style.backgroundColor = COLORS.primary;
+  });
 
+  container.appendChild(button);
+}
 
+function createControlBarUI() {
+  // Remove the logout button and its parent column
+  const logoutCol = document.querySelector(
+    ".Header_header__1RJ5C .col-2.d-flex",
+  );
+  if (logoutCol) logoutCol.remove();
 
+  // Create control bar wrapper
+  const controlBar = document.createElement("div");
+  controlBar.id = "control-bar";
+  controlBar.style.display = "flex";
+  controlBar.style.alignItems = "center";
+  controlBar.style.gap = "12px";
+  controlBar.style.padding = "6px 12px";
+  controlBar.style.backgroundColor = COLORS.backgroundDarker;
+  controlBar.style.border = `1px solid ${COLORS.secondary}`;
+  controlBar.style.borderRadius = "6px";
+  controlBar.style.boxShadow = "0 2px 4px rgba(0,0,0,0.4)";
+  controlBar.style.fontFamily = "inherit";
+  controlBar.style.fontSize = "0.9rem";
+  controlBar.style.flexWrap = "wrap";
+  controlBar.style.position = "absolute";
+  controlBar.style.top = "10px";
+  controlBar.style.right = "20px";
+  controlBar.style.zIndex = "1000";
 
+  // Add controls
+  createPodSelector(controlBar);
+  createTSButton(controlBar);
+  createPodButtonsFromStructure(controlBar);
 
+  // Append to header
+  const header = document.querySelector(".Header_header__1RJ5C");
+  if (header) header.appendChild(controlBar);
+}
 
+function showNotification(message) {
+  let container = document.getElementById("notification-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "notification-container";
+    container.style.position = "fixed";
+    container.style.top = "100px";
+    container.style.left = "50%";
+    container.style.transform = "translateX(-50%)";
+    container.style.zIndex = "9999";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.alignItems = "center";
+    container.style.gap = "10px";
+    document.body.appendChild(container);
+  }
+
+  const notification = document.createElement("div");
+  notification.innerText = message;
+
+  Object.assign(notification.style, {
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    color: COLORS.white,
+    padding: "10px 20px",
+    borderRadius: "5px",
+    minWidth: "200px",
+    textAlign: "center",
+    opacity: "1",
+    transition: "opacity 0.5s ease-in-out",
+    pointerEvents: "auto",
+  });
+
+  container.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    notification.addEventListener("transitionend", () => {
+      notification.remove();
+
+      if (container.childElementCount === 0) {
+        container.remove();
+      }
+    });
+  }, 3000);
+}
 
 function runOnceWhenActivityContainerExists(callback) {
   const interval = setInterval(() => {
-    const container = document.querySelector('.container-fluid.activity_activity__Aldg7');
+    const container = document.querySelector(
+      ".container-fluid.activity_activity__Aldg7",
+    );
     if (container) {
-      clearInterval(interval); // stop further checks
-      callback(); // run your logic
+      clearInterval(interval);
+      callback();
     }
   }, 1000);
 }
 
-// Example usage:
 runOnceWhenActivityContainerExists(() => {
   console.log("✅ Activity container found — running script...");
   createControlBarUI();
   main();
 });
-
-
-
-
 

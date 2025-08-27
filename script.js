@@ -75,15 +75,6 @@ const siteList = [
     "5pod": "Pod A",
   },
   {
-    name: "Trinity - MacNeal",
-    number: "11",
-    projectX: "diligent-robotics",
-    env: "prod-2",
-    "3pod": "Pod B",
-    "4pod": "Pod B",
-    "5pod": "Pod B",
-  },
-  {
     name: "Endeavor Elmhurst",
     number: "8",
     projectX: "diligent-robotics",
@@ -109,15 +100,6 @@ const siteList = [
     "3pod": "Pod B",
     "4pod": "Pod B",
     "5pod": "Pod E",
-  },
-  {
-    name: "Northwestern Delnor",
-    number: "37",
-    projectX: "diligent-robotics",
-    env: "prod-2",
-    "3pod": "Pod B",
-    "4pod": "Pod B",
-    "5pod": "Pod B",
   },
   {
     name: "Endeavor Highland Park",
@@ -1259,12 +1241,16 @@ async function main() {
       const buttonConfig = [
         { label: "All Mbot for Pod:", onClick: createPodSelectionModal },
         {
-          label: "IC Board",
-          url: "https://diligentrobots.atlassian.net/jira/core/projects/IC/board",
+          label: "Jira Forms",
+          url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form",
+        },
+                {
+          label: "Incident Form",
+          url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
         },
         {
           label: "Call Request",
-          url: "https://diligentrobots.atlassian.net/jira/core/projects/IC/form/494",
+          url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
         },
         {
           label: "Run books",
@@ -1272,7 +1258,7 @@ async function main() {
         },
         {
           label: "ROC Coda",
-          url: "https://coda.io/d/Robot-Operations-Center_dgAVnlqszp4/ROC-Home-Page_suLgyApE#_lufk6ZuB",
+          url: "https://coda.io/d/Robot-Operations-Center_dgAVnlqszp4/Autonomy-Phase_suLdgQth#_luqu3x52",
         },
         {
           label: "Common Commands",
@@ -1615,4 +1601,3 @@ runOnceWhenActivityContainerExists(() => {
   createControlBarUI();
   main();
 });
-

@@ -30,26 +30,8 @@ const siteList = [
     "5pod": "Pod A",
   },
   {
-    name: "Multicare Allenmore",
-    number: "39",
-    projectX: "project-3",
-    env: "prod-2",
-    "3pod": "Pod A",
-    "4pod": "Pod A",
-    "5pod": "Pod A",
-  },
-  {
     name: "Montage",
     number: "17",
-    projectX: "project-3",
-    env: "prod-2",
-    "3pod": "Pod A",
-    "4pod": "Pod A",
-    "5pod": "Pod A",
-  },
-  {
-    name: "Multicare Mary Bridge",
-    number: "19",
     projectX: "project-3",
     env: "prod-2",
     "3pod": "Pod A",
@@ -824,7 +806,7 @@ async function main() {
             window.open(
               `https://automate.dronedeploy.com/project/${projectX}/robots/moxi${number}/dashboard/`,
               "_blank",
-              "noopener,noreferrer,width=1280,height=720",
+              "noopener,noreferrer,width=860,height=540",
             );
           }
         }
@@ -1264,6 +1246,10 @@ async function main() {
           label: "Common Commands",
           url: "https://docs.google.com/spreadsheets/d/1QBRl09EXI7lTIgEuPoGXlo6VBzPPFHLnVk-4JE6p5kg/edit?gid=1844596694#gid=1844596694",
         },
+                {
+          label: "Autoprio History",
+          url: "https://apps.diligentrobots.io:4060/robotExclusions.html",
+        },
       ];
 
       const activityLink = document.querySelector(
@@ -1572,18 +1558,33 @@ function showNotification(message) {
 
   container.appendChild(notification);
 
+  // trigger fade out after 3s
   setTimeout(() => {
     notification.style.opacity = "0";
-    notification.addEventListener("transitionend", () => {
-      notification.remove();
 
-      if (container.childElementCount === 0) {
-        container.remove();
+    // Always remove after transition
+    notification.addEventListener(
+      "transitionend",
+      () => {
+        notification.remove();
+        if (container.childElementCount === 0) {
+          container.remove();
+        }
+      },
+      { once: true } // make sure listener only runs once
+    );
+
+    // Fallback in case transitionend never fires
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+        if (container.childElementCount === 0) {
+          container.remove();
+        }
       }
-    });
+    }, 600); // slightly longer than transition
   }, 3000);
 }
-
 function runOnceWhenActivityContainerExists(callback) {
   const interval = setInterval(() => {
     const container = document.querySelector(

@@ -10,6 +10,30 @@
 
 // ==/UserScript==
 
+  const spareBots = new Set([
+    "86",
+    "106",
+    "8",
+    "75",
+    "115",
+    "17",
+    "107",
+    "11",
+    "30",
+    "52",
+    "44",
+    "9",
+    "32",
+    "24",
+    "114",
+    "79",
+    "63",
+    "18",
+    "15",
+    "92",
+    "122",
+  ]);
+
 const siteList = [
   {
     name: "Antelope Valley",
@@ -316,7 +340,6 @@ function updateTableColors() {
       const robotId = robotIdMatch ? robotIdMatch[1] : null;
 
       if (robotId) {
-        // FC Button Styling
         if (HardwareEstopRobots.has(robotId)) {
           fcButton.textContent = "E";
           fcButton.style.backgroundColor = "red";
@@ -340,7 +363,6 @@ function updateTableColors() {
           fcButton.style.position = "relative";
         }
 
-        // DD Button Styling
         if (ElevatorRobotIds.has(robotId)) {
           ddButton.style.backgroundColor = "red";
           ddButton.style.color = COLORS.white;
@@ -560,34 +582,36 @@ function updateSocValues() {
           const auxSocPercent = auxSoc * 100;
           const fetchSocPercent = fetchSoc * 100;
 
-          const updateTextAndColor = (element, percent, isAux) => {
+          // --- separate helpers ---
+          const updateAuxSoc = (element, percent) => {
             let color;
-            if (isAux) {
-              // auxSoc color
-              if (percent > 50) {
-                color = COLORS.safe;
-              } else if (percent > 40) {
-                color = COLORS.warning;
-              } else {
-                color = COLORS.failure;
-              }
+            if (percent > 50) {
+              color = COLORS.safe;
+            } else if (percent > 40) {
+              color = COLORS.warning;
             } else {
-              // fetchSoc color
-              if (percent > 75) {
-                color = COLORS.safe;
-              } else if (percent > 65) {
-                color = COLORS.warning;
-              } else {
-                color = COLORS.failure;
-              }
+              color = COLORS.failure;
             }
-
             element.textContent = `${percent.toFixed(0)}%`;
             element.style.color = color;
           };
 
-          updateTextAndColor(auxSocElement, auxSocPercent);
-          updateTextAndColor(fetchSocElement, fetchSocPercent);
+          const updateFetchSoc = (element, percent) => {
+            let color;
+            if (percent > 75) {
+              color = COLORS.safe;
+            } else if (percent > 65) {
+              color = COLORS.warning;
+            } else {
+              color = COLORS.failure;
+            }
+            element.textContent = `${percent.toFixed(0)}%`;
+            element.style.color = color;
+          };
+          // ------------------------
+
+          updateAuxSoc(auxSocElement, auxSocPercent);
+          updateFetchSoc(fetchSocElement, fetchSocPercent);
 
           auxSocElement.style.display = "inline-block";
           fetchSocElement.style.display = "inline-block";
@@ -602,6 +626,7 @@ function updateSocValues() {
   });
 }
 
+
 function getSiteNameFromRow(row) {
   const tdWithTitle = row.querySelector("td[title]");
   return tdWithTitle ? tdWithTitle.getAttribute("title") : "";
@@ -610,6 +635,7 @@ function getSiteNameFromRow(row) {
 function applyAllFilters() {
   const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
 
+  // Build siteMappings for pod filtering
   filterState.siteMappings = siteList.reduce((acc, site) => {
     const podName = site[filterState.selectedPodType];
     if (!acc[podName]) acc[podName] = [];
@@ -620,8 +646,8 @@ function applyAllFilters() {
   rows.forEach((row) => {
     const siteTitle = getSiteNameFromRow(row);
 
+    // --- Pod filter ---
     let matchesPod = filterState.activePods.size === 0;
-
     for (const pod of filterState.activePods) {
       const sitesForPod = filterState.siteMappings[pod] || [];
       if (sitesForPod.some((site) => site.name === siteTitle)) {
@@ -630,6 +656,7 @@ function applyAllFilters() {
       }
     }
 
+    // --- TS-only filter ---
     let matchesTS = true;
     if (filterState.tsOnly) {
       const cells = row.querySelectorAll("td");
@@ -646,40 +673,23 @@ function applyAllFilters() {
       const failedDiv = row.querySelector('div[title*="FAILED"]');
       const offlineDiv = row.querySelector('div[title*="OFFLINE"]');
 
-      let lowAux = false;
-      let lowFetch = false;
-      let longSameAction = false;
-
+      // Other TS conditions (aux/fetch/longAction/ddButton)
+      let lowAux = false, lowFetch = false, longSameAction = false;
       try {
         const auxCell = row.querySelector(".aux-soc");
         const fetchCell = row.querySelector(".fetch-soc");
-        const actionCell = row.querySelector("td[title]");
-
-        const aux = auxCell
-          ? parseFloat(auxCell.textContent.replace("%", ""))
-          : 100;
-        const fetch = fetchCell
-          ? parseFloat(fetchCell.textContent.replace("%", ""))
-          : 100;
-
-        lowAux = aux < 40;
+        const aux = auxCell ? parseFloat(auxCell.textContent.replace("%", "")) : 100;
+        const fetch = fetchCell ? parseFloat(fetchCell.textContent.replace("%", "")) : 100;
+        lowAux = aux < 35;
         lowFetch = fetch < 65;
 
-        const robotId = row
-          .querySelector("td:nth-child(2)")
-          ?.textContent?.trim();
-        const currentActionType = row
-          .querySelector("td:nth-child(5)")
-          ?.textContent?.trim();
-
+        const robotId = row.querySelector("td:nth-child(2)")?.textContent?.trim();
+        const currentActionType = row.querySelector("td:nth-child(5)")?.textContent?.trim();
         if (robotId && currentActionType) {
           const lastAction = actionTypeMap.get(robotId);
           const lastTime = timerMap.get(robotId);
-
           if (lastAction === currentActionType) {
-            if (Date.now() - lastTime > 900000) {
-              longSameAction = true;
-            }
+            if (Date.now() - lastTime > 900000) longSameAction = true;
           } else {
             actionTypeMap.set(robotId, currentActionType);
             timerMap.set(robotId, Date.now());
@@ -691,9 +701,7 @@ function applyAllFilters() {
 
       const ddButton = row.querySelector(".button-container .dd-button");
       const ddColor = ddButton && getComputedStyle(ddButton).backgroundColor;
-
-      const ddButtonIsRedOrOrange =
-        ddColor === "rgb(255, 0, 0)" || ddColor === "rgb(255, 119, 8)";
+      const ddButtonIsRedOrOrange = ddColor === "rgb(255, 0, 0)" || ddColor === "rgb(255, 119, 8)";
 
       matchesTS =
         thirdRed ||
@@ -706,9 +714,20 @@ function applyAllFilters() {
         ddButtonIsRedOrOrange;
     }
 
-    row.style.display = matchesPod && matchesTS ? "table-row" : "none";
+    // --- IDLE filter ---
+    let matchesIdle = true;
+    const statusCell = Array.from(row.querySelectorAll("td.activity_tableCell__B55ET"))
+      .find(td => td.title?.toLowerCase() === "idle");
+
+    if (statusCell && filterState.robotStatus?.IDLE === false) {
+      matchesIdle = false;
+    }
+
+    // --- Apply combined filters ---
+    row.style.display = matchesPod && matchesTS && matchesIdle ? "table-row" : "none";
   });
 }
+
 
 async function main() {
   let sessionId = getSessionId();
@@ -933,29 +952,6 @@ async function main() {
     });
   }
 
-  const spareBots = new Set([
-    "86",
-    "106",
-    "8",
-    "75",
-    "115",
-    "17",
-    "107",
-    "11",
-    "30",
-    "52",
-    "44",
-    "9",
-    "32",
-    "24",
-    "114",
-    "79",
-    "63",
-    "18",
-    "15",
-    "92",
-    "122",
-  ]);
 
   function highlightSpareBots() {
     const rows = document.querySelectorAll("tbody tr");
@@ -992,7 +988,7 @@ async function main() {
   }
 
   highlightSpareBots();
-
+  setupSocSorting();
   addButtonsToRows();
 
   setInterval(addButtonsToRows, 5000);
@@ -1307,6 +1303,7 @@ function CreateHeaderRow() {
   const headers = theadRow.querySelectorAll("th");
   const socHeader = document.createElement("th");
   const socButton = document.createElement("button");
+  socButton.id = "soc-sort-button"; // <-- give it an ID for later
   socButton.className = "activity_tableHeadButton__uGLCO";
   socButton.textContent = "SOC";
 
@@ -1318,6 +1315,41 @@ function CreateHeaderRow() {
   socHeader.appendChild(socButton);
   theadRow.insertBefore(socHeader, headers[3]);
 }
+
+function setupSocSorting() {
+  const socButton = document.getElementById("soc-sort-button");
+  if (!socButton) return;
+
+  const arrowSpan = socButton.querySelector("span");
+  let sortBy = "aux";
+
+  socButton.addEventListener("click", () => {
+    // Grab all data rows directly
+    const rows = Array.from(document.querySelectorAll("tr.activity_tableRow__qiRKF"));
+    if (!rows.length) return;
+
+    // Toggle aux ↔ fetch
+    sortBy = sortBy === "aux" ? "fetch" : "aux";
+
+    rows.sort((a, b) => {
+      const aVal = parseInt(a.querySelector(`.${sortBy}-soc`)?.textContent) || 0;
+      const bVal = parseInt(b.querySelector(`.${sortBy}-soc`)?.textContent) || 0;
+      return aVal - bVal; // always ascending
+    });
+
+    // Re-append in new order to the table body
+    const tbody = rows[0].parentElement;
+    rows.forEach((row) => tbody.appendChild(row));
+
+    // Update header label + arrow
+    socButton.childNodes[0].nodeValue = `SOC (${sortBy}) `;
+    arrowSpan.textContent = "↑"; // lock arrow to ascending
+  });
+}
+
+
+
+
 
 function highlightRows() {
   const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
@@ -1488,6 +1520,39 @@ function createTSButton(container) {
   container.appendChild(button);
 }
 
+function createIdleButton(container) {
+  const button = document.createElement("button");
+  button.textContent = "IDLE";
+  button.classList.add("idle-button");
+  applyButtonStyles(button);
+
+  let isActive = true; // assume the filter starts on
+
+  button.addEventListener("click", () => {
+    isActive = !isActive;
+
+    // update the shared filter state
+    filterState.robotStatus = filterState.robotStatus || {};
+    filterState.robotStatus.IDLE = isActive;
+
+    // update button styling
+    button.style.backgroundColor = isActive ? COLORS.secondary : COLORS.primary;
+    button.style.border = isActive ? `2px solid ${COLORS.secondary}` : "none";
+
+    applyAllFilters();
+  });
+
+  button.addEventListener("mouseover", () => {
+    if (!isActive) button.style.backgroundColor = COLORS.backgroundDark;
+  });
+
+  button.addEventListener("mouseout", () => {
+    if (!isActive) button.style.backgroundColor = COLORS.primary;
+  });
+
+  container.appendChild(button);
+}
+
 function createControlBarUI() {
   // Remove the logout button and its parent column
   const logoutCol = document.querySelector(
@@ -1514,12 +1579,11 @@ function createControlBarUI() {
   controlBar.style.right = "20px";
   controlBar.style.zIndex = "1000";
 
-  // Add controls
   createPodSelector(controlBar);
   createTSButton(controlBar);
   createPodButtonsFromStructure(controlBar);
+  createIdleButton(controlBar); 
 
-  // Append to header
   const header = document.querySelector(".Header_header__1RJ5C");
   if (header) header.appendChild(controlBar);
 }
@@ -1558,11 +1622,11 @@ function showNotification(message) {
 
   container.appendChild(notification);
 
-  // trigger fade out after 3s
+  
   setTimeout(() => {
     notification.style.opacity = "0";
 
-    // Always remove after transition
+    
     notification.addEventListener(
       "transitionend",
       () => {
@@ -1571,10 +1635,10 @@ function showNotification(message) {
           container.remove();
         }
       },
-      { once: true } // make sure listener only runs once
+      { once: true } 
     );
 
-    // Fallback in case transitionend never fires
+    
     setTimeout(() => {
       if (notification.parentNode) {
         notification.remove();
@@ -1582,7 +1646,7 @@ function showNotification(message) {
           container.remove();
         }
       }
-    }, 600); // slightly longer than transition
+    }, 600); 
   }, 3000);
 }
 function runOnceWhenActivityContainerExists(callback) {
@@ -1597,8 +1661,26 @@ function runOnceWhenActivityContainerExists(callback) {
   }, 1000);
 }
 
+
+
+
+
+
 runOnceWhenActivityContainerExists(() => {
   console.log("✅ Activity container found — running script...");
   createControlBarUI();
   main();
+  // Wait for the table header buttons to be rendered
+setTimeout(() => {
+  const headers = document.querySelectorAll('th');
+  headers.forEach(th => {
+    if (th.textContent.includes('Time in Phase')) {
+      const button = th.querySelector('button');
+      if (button) {
+        button.click(); // this triggers sort
+      }
+    }
+  });
+}, 2000); // adjust 2000ms if table takes longer to render
+
 });

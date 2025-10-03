@@ -10,29 +10,29 @@
 
 // ==/UserScript==
 
-  const spareBots = new Set([
-    "86",
-    "106",
-    "8",
-    "75",
-    "115",
-    "17",
-    "107",
-    "11",
-    "30",
-    "52",
-    "44",
-    "9",
-    "32",
-    "24",
-    "114",
-    "79",
-    "63",
-    "18",
-    "15",
-    "92",
-    "122",
-  ]);
+const spareBots = new Set([
+  "86",
+  "106",
+  "8",
+  "75",
+  "115",
+  "17",
+  "107",
+  "11",
+  "30",
+  "52",
+  "44",
+  "9",
+  "32",
+  "24",
+  "114",
+  "79",
+  "63",
+  "18",
+  "15",
+  "92",
+  "122",
+]);
 
 const siteList = [
   {
@@ -310,9 +310,15 @@ const siteMappings = siteList.reduce((acc, site) => {
 const filterState = {
   activePods: new Set(),
   tsOnly: false,
-  selectedPodType: "3pod",
+  selectedPodType: "4pod",
   siteMappings: {},
+  robotStatus: { IDLE: false },
 };
+
+let permission = await Notification.requestPermission();
+
+const notifiedRobots = new Set();
+const activeNotifications = new Set();
 
 const theadRow = document.querySelector("thead tr");
 
@@ -413,11 +419,10 @@ async function fetchRobotData(sessionId) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      },
+      }
     );
 
     const data = await response.json();
-    console.log(data);
 
     if (data && Array.isArray(data.robots)) {
       ElevatorRobotIds.clear();
@@ -455,12 +460,14 @@ async function fetchRobotData(sessionId) {
         const isLoaded =
           containersState &&
           Object.values(containersState).some(
-            (container) => container.status === "LOADED",
+            (container) => container.status === "LOADED"
           );
 
-        if (isLoaded && taskStatus === "IDLE") {
-          showNotification(`SN${elevatorId} is loaded while idle!`);
-        }
+        const isIdle = taskStatus === "IDLE";
+        RobotData.set(elevatorId, {
+          ...RobotData.get(elevatorId),
+          forceVisible: isLoaded && isIdle,
+        });
 
         if (
           taskStatus === "BUSY" &&
@@ -508,8 +515,6 @@ async function fetchRobotData(sessionId) {
           HardwareEstopRobots.add(elevatorId);
         }
       });
-
-      console.log("Busy Robots:", busyRobotsArray);
 
       updateTableColors();
       updateSocValues();
@@ -582,7 +587,6 @@ function updateSocValues() {
           const auxSocPercent = auxSoc * 100;
           const fetchSocPercent = fetchSoc * 100;
 
-          // --- separate helpers ---
           const updateAuxSoc = (element, percent) => {
             let color;
             if (percent > 50) {
@@ -608,7 +612,6 @@ function updateSocValues() {
             element.textContent = `${percent.toFixed(0)}%`;
             element.style.color = color;
           };
-          // ------------------------
 
           updateAuxSoc(auxSocElement, auxSocPercent);
           updateFetchSoc(fetchSocElement, fetchSocPercent);
@@ -626,7 +629,6 @@ function updateSocValues() {
   });
 }
 
-
 function getSiteNameFromRow(row) {
   const tdWithTitle = row.querySelector("td[title]");
   return tdWithTitle ? tdWithTitle.getAttribute("title") : "";
@@ -635,7 +637,6 @@ function getSiteNameFromRow(row) {
 function applyAllFilters() {
   const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
 
-  // Build siteMappings for pod filtering
   filterState.siteMappings = siteList.reduce((acc, site) => {
     const podName = site[filterState.selectedPodType];
     if (!acc[podName]) acc[podName] = [];
@@ -643,10 +644,17 @@ function applyAllFilters() {
     return acc;
   }, {});
 
+  // Clear old notifications once
+  const container = document.getElementById("notification-container");
+  if (container) {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+  }
+
   rows.forEach((row) => {
     const siteTitle = getSiteNameFromRow(row);
 
-    // --- Pod filter ---
     let matchesPod = filterState.activePods.size === 0;
     for (const pod of filterState.activePods) {
       const sitesForPod = filterState.siteMappings[pod] || [];
@@ -656,7 +664,6 @@ function applyAllFilters() {
       }
     }
 
-    // --- TS-only filter ---
     let matchesTS = true;
     if (filterState.tsOnly) {
       const cells = row.querySelectorAll("td");
@@ -673,18 +680,27 @@ function applyAllFilters() {
       const failedDiv = row.querySelector('div[title*="FAILED"]');
       const offlineDiv = row.querySelector('div[title*="OFFLINE"]');
 
-      // Other TS conditions (aux/fetch/longAction/ddButton)
-      let lowAux = false, lowFetch = false, longSameAction = false;
+      let lowAux = false,
+        lowFetch = false,
+        longSameAction = false;
       try {
         const auxCell = row.querySelector(".aux-soc");
         const fetchCell = row.querySelector(".fetch-soc");
-        const aux = auxCell ? parseFloat(auxCell.textContent.replace("%", "")) : 100;
-        const fetch = fetchCell ? parseFloat(fetchCell.textContent.replace("%", "")) : 100;
-        lowAux = aux < 35;
-        lowFetch = fetch < 65;
+        const aux = auxCell
+          ? parseFloat(auxCell.textContent.replace("%", ""))
+          : 100;
+        const fetch = fetchCell
+          ? parseFloat(fetchCell.textContent.replace("%", ""))
+          : 100;
+        lowAux = aux < 40;
+        lowFetch = fetch < 70;
 
-        const robotId = row.querySelector("td:nth-child(2)")?.textContent?.trim();
-        const currentActionType = row.querySelector("td:nth-child(5)")?.textContent?.trim();
+        const robotId = row
+          .querySelector("td:nth-child(2)")
+          ?.textContent?.trim();
+        const currentActionType = row
+          .querySelector("td:nth-child(5)")
+          ?.textContent?.trim();
         if (robotId && currentActionType) {
           const lastAction = actionTypeMap.get(robotId);
           const lastTime = timerMap.get(robotId);
@@ -701,7 +717,8 @@ function applyAllFilters() {
 
       const ddButton = row.querySelector(".button-container .dd-button");
       const ddColor = ddButton && getComputedStyle(ddButton).backgroundColor;
-      const ddButtonIsRedOrOrange = ddColor === "rgb(255, 0, 0)" || ddColor === "rgb(255, 119, 8)";
+      const ddButtonIsRedOrOrange =
+        ddColor === "rgb(255, 0, 0)" || ddColor === "rgb(255, 119, 8)";
 
       matchesTS =
         thirdRed ||
@@ -714,31 +731,42 @@ function applyAllFilters() {
         ddButtonIsRedOrOrange;
     }
 
-    // --- IDLE filter ---
     let matchesIdle = true;
-    const statusCell = Array.from(row.querySelectorAll("td.activity_tableCell__B55ET"))
-      .find(td => td.title?.toLowerCase() === "idle");
+    const statusCell = Array.from(
+      row.querySelectorAll("td.activity_tableCell__B55ET")
+    ).find((td) => td.title?.toLowerCase() === "idle");
 
     if (statusCell && filterState.robotStatus?.IDLE === false) {
       matchesIdle = false;
     }
 
-    // --- Apply combined filters ---
-    row.style.display = matchesPod && matchesTS && matchesIdle ? "table-row" : "none";
+    row.style.display =
+      matchesPod && matchesTS && matchesIdle ? "table-row" : "none";
+
+    const numberCell = row.querySelector(
+      "td.activity_tableCellHighlight__apWjX"
+    );
+    const number = numberCell.textContent.trim();
+    const robotData = RobotData.get(number);
+
+    const forceVisible = robotData?.forceVisible && matchesPod;
+
+    if (forceVisible) {
+      row.style.display = "table-row";
+      showNotification(`SN${number} is loaded while idle!`);
+    }
   });
 }
-
 
 async function main() {
   let sessionId = getSessionId();
   while (!sessionId) {
-    console.log("⏳ Waiting for session ID...");
     await new Promise((resolve) => setTimeout(resolve, 2000));
     sessionId = getSessionId();
   }
 
   await fetchRobotData(sessionId);
-  setInterval(() => fetchRobotData(sessionId), 5000);
+  setInterval(() => fetchRobotData(sessionId), 3000);
   applyGlobalFailureHighlight();
 
   if (theadRow) {
@@ -773,160 +801,79 @@ async function main() {
   const table = document.querySelector("table");
   observer.observe(table, { childList: true, subtree: true });
 
-  let lastRowCount = 0;
   function addButtonsToRows() {
     const baseDDUrl =
       "https://automate.dronedeploy.com/project/diligent-robotics/robots/moxi";
     const baseMbotUrl = "https://sitexx.diligentrobots.io/app/mbot";
+
     const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
 
     rows.forEach((row) => {
-      const existingButtonContainer = row.querySelector(".button-container");
-      if (existingButtonContainer) {
-        return;
-      }
+      if (row.querySelector(".button-container")) return;
 
       const buttonContainer = document.createElement("div");
       buttonContainer.className = "button-container";
       buttonContainer.style.display = "flex";
       buttonContainer.style.alignItems = "center";
       buttonContainer.style.marginRight = "10px";
+
       const ddButton = document.createElement("button");
       ddButton.textContent = " DD ";
       ddButton.className = "dd-button";
-      ddButton.style.padding = "10px 20px";
-      ddButton.style.cursor = "pointer";
-      ddButton.style.marginRight = "10px";
-      ddButton.style.fontSize = "14px";
-      ddButton.style.textAlign = "center";
-      ddButton.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
-      ddButton.style.boxSizing = "border-box";
-      ddButton.style.minWidth = "60px";
-      ddButton.style.border = "none";
-      ddButton.style.fontWeight = "bold";
-      ddButton.style.color = COLORS.white;
-      ddButton.style.backgroundColor = COLORS.backgroundDark;
-      ddButton.style.borderRadius = "5px";
-      ddButton.style.position = "relative";
-
+      Object.assign(ddButton.style, {
+        padding: "10px 20px",
+        cursor: "pointer",
+        marginRight: "10px",
+        fontSize: "14px",
+        textAlign: "center",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxSizing: "border-box",
+        minWidth: "60px",
+        border: "none",
+        fontWeight: "bold",
+        color: COLORS.white,
+        backgroundColor: COLORS.backgroundDark,
+        borderRadius: "5px",
+        position: "relative",
+      });
       ddButton.addEventListener("click", () => {
         const numberCell = row.querySelector(
-          "td.activity_tableCellHighlight__apWjX",
+          "td.activity_tableCellHighlight__apWjX"
         );
         const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-
         if (numberCell && titleCell) {
           const number = numberCell.textContent.trim();
           const siteName = titleCell.textContent.trim();
           const site = getSiteByName(siteName);
-
           if (site && site.projectX) {
-            const projectX = site.projectX;
             window.open(
-              `https://automate.dronedeploy.com/project/${projectX}/robots/moxi${number}/dashboard/`,
+              `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${number}/dashboard/`,
               "_blank",
-              "noopener,noreferrer,width=860,height=540",
+              "noopener,noreferrer,width=860,height=540"
             );
           }
         }
       });
 
-      buttonContainer.appendChild(ddButton);
-
       const mbotButton = document.createElement("button");
       mbotButton.textContent = "MB";
       mbotButton.className = "mbot-button";
-      mbotButton.style.padding = "10px 20px";
-      mbotButton.style.cursor = "pointer";
-      mbotButton.style.marginRight = "10px";
-      mbotButton.style.fontSize = "14px";
-      mbotButton.style.fontWeight = "bold";
-      mbotButton.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
-      mbotButton.style.textAlign = "center";
-      mbotButton.style.boxSizing = "border-box";
-      mbotButton.style.minWidth = "60px";
-      mbotButton.style.border = "none";
-      mbotButton.style.color = COLORS.white;
-      mbotButton.style.backgroundColor = COLORS.primary;
-      mbotButton.style.borderRadius = "5px";
-      mbotButton.style.position = "relative";
-
-      const fcButton = document.createElement("button");
-      fcButton.textContent = "FC";
-      fcButton.className = "fc-button";
-      fcButton.style.padding = "10px 20px";
-      fcButton.style.cursor = "pointer";
-      fcButton.style.marginRight = "10px";
-      fcButton.style.fontSize = "14px";
-      fcButton.style.fontWeight = "bold";
-      fcButton.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
-      fcButton.style.textAlign = "center";
-      fcButton.style.boxSizing = "border-box";
-      fcButton.style.minWidth = "60px";
-      fcButton.style.border = "none";
-      fcButton.style.color = COLORS.white;
-      fcButton.style.backgroundColor = COLORS.secondary;
-      fcButton.style.borderRadius = "5px";
-      fcButton.style.position = "relative";
-
-      fcButton.addEventListener("click", () => {
-        const statusDiv = row.querySelector("td:nth-child(3) .d-flex");
-        const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-        const siteName = titleCell ? titleCell.textContent.trim() : "";
-
-        if (statusDiv) {
-          const robotIdText = statusDiv.textContent.trim();
-          const robotIdMatch = robotIdText.match(/(\d+)$/);
-          const robotId = robotIdMatch ? robotIdMatch[1] : null;
-
-          if (robotId) {
-            const site = getSiteByName(siteName);
-            if (site && site.env) {
-              const env = site.env;
-              if (RobotData.has(robotId)) {
-                const mapFrameId = RobotData.get(robotId).mapFrameId;
-                console.log("Robot ID:", robotId);
-                console.log("Map Frame ID:", mapFrameId);
-                if (mapFrameId) {
-                  let robotLink = `https://diligentrobots-${env}.fetchcore-cloud.com/management/#/maps/${mapFrameId}/published/robots`;
-                  window.open(robotLink, "_blank");
-                }
-              }
-            }
-          }
-        }
+      Object.assign(mbotButton.style, {
+        padding: "10px 20px",
+        cursor: "pointer",
+        marginRight: "10px",
+        fontSize: "14px",
+        fontWeight: "bold",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        textAlign: "center",
+        boxSizing: "border-box",
+        minWidth: "60px",
+        border: "none",
+        color: COLORS.white,
+        backgroundColor: COLORS.primary,
+        borderRadius: "5px",
+        position: "relative",
       });
-
-      buttonContainer.appendChild(fcButton);
-
-      function getSiteNumber(siteName) {
-        for (const pod in siteMappings) {
-          if (siteMappings.hasOwnProperty(pod)) {
-            const site = siteMappings[pod].find((s) => s.name === siteName);
-            if (site) {
-              return site.number;
-            }
-          }
-        }
-        return null;
-      }
-      function getSiteByName(siteName) {
-        for (const pod in siteMappings) {
-          if (siteMappings.hasOwnProperty(pod)) {
-            const site = siteMappings[pod].find((s) => s.name === siteName);
-            if (site) {
-              return site;
-            }
-          }
-        }
-      }
-
-      const buttonColors = {
-        ddButton: COLORS.backgroundDark,
-        fcButton: COLORS.secondary,
-        mbotButton: COLORS.primary,
-      };
-
       mbotButton.addEventListener("click", () => {
         const titleCell = row.querySelector("td.activity_tableCell__B55ET");
         if (titleCell) {
@@ -936,13 +883,352 @@ async function main() {
             window.open(
               `${baseMbotUrl.replace("xx", siteNumber)}`,
               "_blank",
-              "noopener,noreferrer,width=800,height=600",
+              "noopener,noreferrer,width=800,height=600"
             );
           }
         }
       });
 
+      const fcButton = document.createElement("button");
+      fcButton.textContent = "FC";
+      fcButton.className = "fc-button";
+      Object.assign(fcButton.style, {
+        padding: "10px 20px",
+        cursor: "pointer",
+        marginRight: "10px",
+        fontSize: "14px",
+        fontWeight: "bold",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        textAlign: "center",
+        boxSizing: "border-box",
+        minWidth: "60px",
+        border: "none",
+        color: COLORS.white,
+        backgroundColor: COLORS.secondary,
+        borderRadius: "5px",
+        position: "relative",
+      });
+      fcButton.addEventListener("click", () => {
+        const statusDiv = row.querySelector("td:nth-child(3) .d-flex");
+        const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+        const siteName = titleCell ? titleCell.textContent.trim() : "";
+        if (statusDiv) {
+          const robotIdText = statusDiv.textContent.trim();
+          const robotIdMatch = robotIdText.match(/(\d+)$/);
+          const robotId = robotIdMatch ? robotIdMatch[1] : null;
+          if (robotId) {
+            const site = getSiteByName(siteName);
+            if (site && site.env && RobotData.has(robotId)) {
+              const mapFrameId = RobotData.get(robotId).mapFrameId;
+              if (mapFrameId) {
+                window.open(
+                  `https://diligentrobots-${site.env}.fetchcore-cloud.com/management/#/maps/${mapFrameId}/published/robots`,
+                  "_blank"
+                );
+              }
+            }
+          }
+        }
+      });
+
+      buttonContainer.appendChild(ddButton);
+      buttonContainer.appendChild(fcButton);
       buttonContainer.appendChild(mbotButton);
+
+      function addICButton() {
+        if (row.querySelector(".ic-button")) return;
+
+        const icButton = document.createElement("button");
+        icButton.textContent = "IC";
+        icButton.className = "ic-button";
+        Object.assign(icButton.style, {
+          padding: "10px 20px",
+          cursor: "pointer",
+          marginRight: "10px",
+          fontSize: "14px",
+          fontWeight: "bold",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box",
+          minWidth: "60px",
+          border: "none",
+          color: COLORS.white,
+          backgroundColor: "#007bff",
+          borderRadius: "5px",
+          position: "relative",
+        });
+
+        icButton.addEventListener("click", () => {
+          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+          const numberCell = row.querySelector(
+            "td.activity_tableCellHighlight__apWjX"
+          );
+          const siteName = titleCell
+            ? titleCell.textContent.trim()
+            : "Unknown Site";
+          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+          const botNumber = numberCell
+            ? numberCell.textContent.trim()
+            : "UnknownSN";
+          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - `;
+
+          navigator.clipboard
+            .writeText(clipboardText)
+            .then(() => console.log("Copied:", clipboardText))
+            .catch((err) => console.error(err));
+
+          window.open(
+            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
+            "_blank",
+            "noopener,noreferrer,width=800,height=600"
+          );
+        });
+
+        buttonContainer.appendChild(icButton);
+      }
+
+      if (row.querySelector('div[title*="FAILED"]')) {
+        addICButton();
+      }
+
+      const failObserver = new MutationObserver(() => {
+        const existingIC = row.querySelector(".ic-button");
+        if (row.querySelector('div[title*="FAILED"]')) {
+          if (!existingIC) {
+            if (row.style.display !== "none") {
+              const titleCell = row.querySelector(
+                "td.activity_tableCell__B55ET"
+              );
+              const numberCell = row.querySelector(
+                "td.activity_tableCellHighlight__apWjX"
+              );
+              const siteName = titleCell
+                ? titleCell.textContent.trim()
+                : "Unknown Site";
+              const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+              const botNumber = numberCell
+                ? numberCell.textContent.trim()
+                : "UnknownSN";
+              const notificationtext = `${siteName} Site${siteNumber} SN${botNumber} - failed`;
+
+              const failed = new Notification("Failed", {
+                body: notificationtext,
+                icon: "	https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+              });
+              setTimeout(() => failed.close(), 10 * 1000);
+            }
+            addICButton();
+          }
+        } else if (existingIC) {
+          existingIC.remove();
+        }
+      });
+
+      failObserver.observe(row, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+
+      function addCSButton() {
+        if (row.querySelector(".cs-button")) return;
+
+        const csButton = document.createElement("button");
+        csButton.textContent = "CS";
+        csButton.className = "cs-button";
+        Object.assign(csButton.style, {
+          padding: "10px 20px",
+          cursor: "pointer",
+          marginRight: "10px",
+          fontSize: "14px",
+          fontWeight: "bold",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box",
+          minWidth: "60px",
+          border: "none",
+          color: COLORS.white,
+          backgroundColor: "#007bff",
+          borderRadius: "5px",
+          position: "relative",
+        });
+
+        csButton.addEventListener("click", () => {
+          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+          const numberCell = row.querySelector(
+            "td.activity_tableCellHighlight__apWjX"
+          );
+          const siteName = titleCell
+            ? titleCell.textContent.trim()
+            : "Unknown Site";
+          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+          const botNumber = numberCell
+            ? numberCell.textContent.trim()
+            : "UnknownSN";
+          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Bot is estopped`;
+
+          navigator.clipboard
+            .writeText(clipboardText)
+            .then(() => console.log("Copied:", clipboardText))
+            .catch((err) => console.error(err));
+
+          window.open(
+            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+            "_blank",
+            "noopener,noreferrer,width=800,height=600"
+          );
+        });
+
+        buttonContainer.appendChild(csButton);
+      }
+
+      if (fcButton.textContent === "E") {
+        addCSButton();
+      }
+
+      const fcObserver = new MutationObserver(() => {
+        const existingCS = row.querySelector(".cs-button");
+        if (fcButton.textContent === "E") {
+          if (!existingCS) addCSButton();
+        } else if (existingCS) {
+          if (row.style.display !== "none") {
+            const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+            const numberCell = row.querySelector(
+              "td.activity_tableCellHighlight__apWjX"
+            );
+            const siteName = titleCell
+              ? titleCell.textContent.trim()
+              : "Unknown Site";
+            const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+            const botNumber = numberCell
+              ? numberCell.textContent.trim()
+              : "UnknownSN";
+            const notificationtext = `${siteName} Site${siteNumber} SN${botNumber} - unestopped`;
+            const unestopped = new Notification("Unestopped Bot 🎉", {
+              body: notificationtext,
+              icon: "	https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+            });
+            setTimeout(() => unestopped.close(), 10 * 1000);
+          }
+          existingCS.remove();
+        }
+      });
+      fcObserver.observe(fcButton, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+
+      function addCRButton() {
+        if (row.querySelector(".cr-button")) return;
+
+        const crButton = document.createElement("button");
+        crButton.textContent = "CS";
+        crButton.className = "cr-button";
+        Object.assign(crButton.style, {
+          padding: "10px 20px",
+          cursor: "pointer",
+          marginRight: "10px",
+          fontSize: "14px",
+          fontWeight: "bold",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box",
+          minWidth: "60px",
+          border: "none",
+          color: COLORS.white,
+          backgroundColor: "#007bff",
+          borderRadius: "5px",
+          position: "relative",
+        });
+
+        crButton.addEventListener("click", () => {
+          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+          const numberCell = row.querySelector(
+            "td.activity_tableCellHighlight__apWjX"
+          );
+          const siteName = titleCell
+            ? titleCell.textContent.trim()
+            : "Unknown Site";
+          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+          const botNumber = numberCell
+            ? numberCell.textContent.trim()
+            : "UnknownSN";
+
+          const cells = row.querySelectorAll("td");
+          const phase = cells[5]
+            ? cells[5].textContent.trim().toLowerCase()
+            : "";
+
+          let unit = "";
+          let action = "";
+
+          if (phase === "loading") {
+            unit = cells[7] ? cells[7].textContent.trim() : "UnknownUnit";
+            action = "load";
+          } else if (phase === "unloading") {
+            unit = cells[8] ? cells[8].textContent.trim() : "UnknownUnit";
+            action = "unload";
+          }
+
+          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
+
+          navigator.clipboard
+            .writeText(clipboardText)
+            .then(() => console.log("Copied:", clipboardText))
+            .catch((err) => console.error(err));
+
+          window.open(
+            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+            "_blank",
+            "noopener,noreferrer,width=800,height=600"
+          );
+        });
+
+        buttonContainer.appendChild(crButton);
+      }
+
+      const cells = row.querySelectorAll("td");
+      const fourthCell = cells[4];
+      const phaseCell = cells[5];
+
+      function processfourthCell(cell, phaseCell) {
+        const timeText = cell.textContent.trim();
+        const minutesMatch = timeText.match(/^(\d+)(m)?$/);
+
+        if (minutesMatch) {
+          const minutes = parseInt(minutesMatch[1], 10);
+          const phase = phaseCell
+            ? phaseCell.textContent.trim().toLowerCase()
+            : "";
+
+          if (minutes > 25) {
+            if (phase == "loading" || phase == "unloading") {
+              addCRButton();
+            }
+          } else {
+            const existing = row.querySelector(".cr-button");
+            if (existing) existing.remove();
+          }
+        }
+      }
+
+      processfourthCell(fourthCell, phaseCell);
+
+      const crObserver = new MutationObserver(() => {
+        processfourthCell(fourthCell, phaseCell);
+      });
+      crObserver.observe(fourthCell, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      crObserver.observe(phaseCell, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+
       const titleCell = row.querySelector("td.activity_tableCell__B55ET");
       if (titleCell) {
         titleCell.parentNode.insertBefore(buttonContainer, titleCell);
@@ -950,8 +1236,24 @@ async function main() {
         row.appendChild(buttonContainer);
       }
     });
-  }
 
+    function getSiteNumber(siteName) {
+      for (const pod in siteMappings) {
+        if (!siteMappings.hasOwnProperty(pod)) continue;
+        const site = siteMappings[pod].find((s) => s.name === siteName);
+        if (site) return site.number;
+      }
+      return null;
+    }
+
+    function getSiteByName(siteName) {
+      for (const pod in siteMappings) {
+        if (!siteMappings.hasOwnProperty(pod)) continue;
+        const site = siteMappings[pod].find((s) => s.name === siteName);
+        if (site) return site;
+      }
+    }
+  }
 
   function highlightSpareBots() {
     const rows = document.querySelectorAll("tbody tr");
@@ -963,7 +1265,7 @@ async function main() {
 
       const children = Array.from(statusDiv.childNodes);
       const textNode = children.find(
-        (n) => n.nodeType === Node.TEXT_NODE && /\d+/.test(n.textContent),
+        (n) => n.nodeType === Node.TEXT_NODE && /\d+/.test(n.textContent)
       );
       if (!textNode) return;
 
@@ -982,7 +1284,7 @@ async function main() {
         }
       } else {
         const span = statusDiv.querySelector(".robot-id-span");
-        span.style.color = isSpecial ? COLORS.primary : "";
+        span.style.color = isSpare ? COLORS.primary : "";
       }
     });
   }
@@ -1170,7 +1472,7 @@ async function main() {
             window.open(
               baseMbotUrl.replace("xx", siteNumber),
               "_blank",
-              "noopener,noreferrer,width=800,height=600",
+              "noopener,noreferrer,width=800,height=600"
             );
           } else {
             console.error(`Site number not found for site name: ${site.name}`);
@@ -1179,7 +1481,6 @@ async function main() {
       }
     }
 
-    // SIDEBAR BUTTONS
     function insertSidebarLinks() {
       function createButton(text, url, onClick) {
         const button = document.createElement("button");
@@ -1209,7 +1510,15 @@ async function main() {
           button.addEventListener("click", onClick);
         } else if (url) {
           button.addEventListener("click", () => {
-            window.open(url, "_blank", "noopener,noreferrer");
+            if (text === "Incident Form" || text === "Call Request") {
+              window.open(
+                url,
+                "_blank",
+                "noopener,noreferrer,width=800,height=600"
+              );
+            } else {
+              window.open(url, "_blank", "noopener,noreferrer");
+            }
           });
         }
 
@@ -1222,7 +1531,7 @@ async function main() {
           label: "Jira Forms",
           url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form",
         },
-                {
+        {
           label: "Incident Form",
           url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
         },
@@ -1242,14 +1551,14 @@ async function main() {
           label: "Common Commands",
           url: "https://docs.google.com/spreadsheets/d/1QBRl09EXI7lTIgEuPoGXlo6VBzPPFHLnVk-4JE6p5kg/edit?gid=1844596694#gid=1844596694",
         },
-                {
+        {
           label: "Autoprio History",
           url: "https://apps.diligentrobots.io:4060/robotExclusions.html",
         },
       ];
 
       const activityLink = document.querySelector(
-        '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]',
+        '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]'
       );
       if (activityLink) {
         const container = document.createElement("div");
@@ -1303,7 +1612,7 @@ function CreateHeaderRow() {
   const headers = theadRow.querySelectorAll("th");
   const socHeader = document.createElement("th");
   const socButton = document.createElement("button");
-  socButton.id = "soc-sort-button"; // <-- give it an ID for later
+  socButton.id = "soc-sort-button";
   socButton.className = "activity_tableHeadButton__uGLCO";
   socButton.textContent = "SOC";
 
@@ -1324,32 +1633,28 @@ function setupSocSorting() {
   let sortBy = "aux";
 
   socButton.addEventListener("click", () => {
-    // Grab all data rows directly
-    const rows = Array.from(document.querySelectorAll("tr.activity_tableRow__qiRKF"));
+    const rows = Array.from(
+      document.querySelectorAll("tr.activity_tableRow__qiRKF")
+    );
     if (!rows.length) return;
 
-    // Toggle aux ↔ fetch
     sortBy = sortBy === "aux" ? "fetch" : "aux";
 
     rows.sort((a, b) => {
-      const aVal = parseInt(a.querySelector(`.${sortBy}-soc`)?.textContent) || 0;
-      const bVal = parseInt(b.querySelector(`.${sortBy}-soc`)?.textContent) || 0;
-      return aVal - bVal; // always ascending
+      const aVal =
+        parseInt(a.querySelector(`.${sortBy}-soc`)?.textContent) || 0;
+      const bVal =
+        parseInt(b.querySelector(`.${sortBy}-soc`)?.textContent) || 0;
+      return aVal - bVal;
     });
 
-    // Re-append in new order to the table body
     const tbody = rows[0].parentElement;
     rows.forEach((row) => tbody.appendChild(row));
 
-    // Update header label + arrow
     socButton.childNodes[0].nodeValue = `SOC (${sortBy}) `;
-    arrowSpan.textContent = "↑"; // lock arrow to ascending
+    arrowSpan.textContent = "↑";
   });
 }
-
-
-
-
 
 function highlightRows() {
   const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
@@ -1466,6 +1771,7 @@ function createPodSelector(containerElement) {
     const option = document.createElement("option");
     option.value = pod;
     option.textContent = pod.toUpperCase();
+    if (pod === "4pod") option.selected = true; // 🚩 default to 4pod
     select.appendChild(option);
   });
 
@@ -1492,7 +1798,6 @@ function createTSButton(container) {
   button.textContent = "TS";
   button.classList.add("ts-button");
 
-  // Use the shared styling
   applyButtonStyles(button);
 
   button.style.position = "static";
@@ -1526,16 +1831,19 @@ function createIdleButton(container) {
   button.classList.add("idle-button");
   applyButtonStyles(button);
 
-  let isActive = true; // assume the filter starts on
+  let isActive = false;
+
+  filterState.robotStatus = filterState.robotStatus || {};
+  filterState.robotStatus.IDLE = isActive;
+
+  button.style.backgroundColor = COLORS.primary;
+  button.style.border = "none";
 
   button.addEventListener("click", () => {
     isActive = !isActive;
 
-    // update the shared filter state
-    filterState.robotStatus = filterState.robotStatus || {};
     filterState.robotStatus.IDLE = isActive;
 
-    // update button styling
     button.style.backgroundColor = isActive ? COLORS.secondary : COLORS.primary;
     button.style.border = isActive ? `2px solid ${COLORS.secondary}` : "none";
 
@@ -1554,13 +1862,11 @@ function createIdleButton(container) {
 }
 
 function createControlBarUI() {
-  // Remove the logout button and its parent column
   const logoutCol = document.querySelector(
-    ".Header_header__1RJ5C .col-2.d-flex",
+    ".Header_header__1RJ5C .col-2.d-flex"
   );
   if (logoutCol) logoutCol.remove();
 
-  // Create control bar wrapper
   const controlBar = document.createElement("div");
   controlBar.id = "control-bar";
   controlBar.style.display = "flex";
@@ -1582,7 +1888,7 @@ function createControlBarUI() {
   createPodSelector(controlBar);
   createTSButton(controlBar);
   createPodButtonsFromStructure(controlBar);
-  createIdleButton(controlBar); 
+  createIdleButton(controlBar);
 
   const header = document.querySelector(".Header_header__1RJ5C");
   if (header) header.appendChild(controlBar);
@@ -1615,44 +1921,16 @@ function showNotification(message) {
     borderRadius: "5px",
     minWidth: "200px",
     textAlign: "center",
-    opacity: "1",
-    transition: "opacity 0.5s ease-in-out",
     pointerEvents: "auto",
   });
 
   container.appendChild(notification);
-
-  
-  setTimeout(() => {
-    notification.style.opacity = "0";
-
-    
-    notification.addEventListener(
-      "transitionend",
-      () => {
-        notification.remove();
-        if (container.childElementCount === 0) {
-          container.remove();
-        }
-      },
-      { once: true } 
-    );
-
-    
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-        if (container.childElementCount === 0) {
-          container.remove();
-        }
-      }
-    }, 600); 
-  }, 3000);
 }
+
 function runOnceWhenActivityContainerExists(callback) {
   const interval = setInterval(() => {
     const container = document.querySelector(
-      ".container-fluid.activity_activity__Aldg7",
+      ".container-fluid.activity_activity__Aldg7"
     );
     if (container) {
       clearInterval(interval);
@@ -1661,26 +1939,19 @@ function runOnceWhenActivityContainerExists(callback) {
   }, 1000);
 }
 
-
-
-
-
-
 runOnceWhenActivityContainerExists(() => {
   console.log("✅ Activity container found — running script...");
   createControlBarUI();
   main();
-  // Wait for the table header buttons to be rendered
-setTimeout(() => {
-  const headers = document.querySelectorAll('th');
-  headers.forEach(th => {
-    if (th.textContent.includes('Time in Phase')) {
-      const button = th.querySelector('button');
-      if (button) {
-        button.click(); // this triggers sort
+  setTimeout(() => {
+    const headers = document.querySelectorAll("th");
+    headers.forEach((th) => {
+      if (th.textContent.includes("Time in Phase")) {
+        const button = th.querySelector("button");
+        if (button) {
+          button.click();
+        }
       }
-    }
-  });
-}, 2000); // adjust 2000ms if table takes longer to render
-
+    });
+  }, 2000);
 });

@@ -280,6 +280,38 @@ const siteList = [
   },
 ];
 
+const buttonConfig = [
+  { label: "All Mbot for Pod:" },
+  {
+    label: "Jira Forms",
+    url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form",
+  },
+  {
+    label: "Incident Form",
+    url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
+  },
+  {
+    label: "Call Request",
+    url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+  },
+  {
+    label: "Run books",
+    url: "https://coda.io/d/Runbooks_d_A2-DtqJJR/Ops-Runbooks-Home-Page_su20ZBgR#Runbooks-Red-Team-View_tuyi_4z_",
+  },
+  {
+    label: "ROC Coda",
+    url: "https://coda.io/d/Robot-Operations-Center_dgAVnlqszp4/Autonomy-Phase_suLdgQth#_luqu3x52",
+  },
+  {
+    label: "Common Commands",
+    url: "https://docs.google.com/spreadsheets/d/1QBRl09EXI7lTIgEuPoGXlo6VBzPPFHLnVk-4JE6p5kg/edit?gid=1844596694#gid=1844596694",
+  },
+  {
+    label: "Autoprio History",
+    url: "https://apps.diligentrobots.io:4060/robotExclusions.html",
+  },
+];
+
 const COLORS = {
   primary: "#39a3b6",
   backgroundDark: "#343a40",
@@ -350,6 +382,7 @@ function updateTableColors() {
           fcButton.textContent = "E";
           fcButton.style.backgroundColor = "red";
           fcButton.style.color = COLORS.white;
+          fcButton.classList.add("animated-button");
         } else {
           fcButton.textContent = "FC";
           fcButton.className = "fc-button";
@@ -367,6 +400,7 @@ function updateTableColors() {
           fcButton.style.backgroundColor = COLORS.secondary;
           fcButton.style.borderRadius = "5px";
           fcButton.style.position = "relative";
+          fcButton.classList.add("animated-button");
         }
 
         if (ElevatorRobotIds.has(robotId)) {
@@ -519,10 +553,10 @@ async function fetchRobotData(sessionId) {
       updateTableColors();
       updateSocValues();
     } else {
-      console.warn("⚠️ Invalid robot data received");
+      console.warn("Invalid robot data received");
     }
   } catch (error) {
-    console.error("❌ Error during asyncCall:", error);
+    console.error("Error during asyncCall:", error);
   }
 }
 
@@ -532,6 +566,15 @@ function updateSocValues() {
   rows.forEach((row) => {
     try {
       const statusDiv = row.querySelector("td:nth-child(3) .d-flex");
+      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
+      const baseMbotUrl = "https://sitexx.diligentrobots.io/app/mbot";
+
+      if (!titleCell || !numberCell || !statusDiv) return;
+
+      const siteName = titleCell.textContent.trim();
+      const siteNumber = getSiteNumber(siteName) || "UnknownNumber"; 
+      const botNumber = numberCell.textContent.trim();
       let auxSocElement = row.querySelector(".aux-soc");
       let fetchSocElement = row.querySelector(".fetch-soc");
       let wrapper = row.querySelector(".soc-wrapper");
@@ -613,6 +656,48 @@ function updateSocValues() {
             element.style.color = color;
           };
 
+          if (row.style.display !== "none" && auxSocPercent < 39 && !row.auxAlertTriggered) {
+            row.auxAlertTriggered = true;
+
+            const auxNotification = new Notification(`SN${botNumber} ${siteName}`, {
+              body: `WARNING low aux ${auxSocPercent.toFixed(0)}%`,
+              icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+            });
+
+            auxNotification.onclick = () => {
+            if (siteNumber) {
+              window.open(
+                `${baseMbotUrl.replace("xx", siteNumber)}`,
+                "_blank",
+                "noopener,noreferrer,width=800,height=600"
+              );
+            }
+            };
+          } else if (auxSocPercent >= 39) {
+            row.auxAlertTriggered = false;
+          }
+
+          if (row.style.display !== "none" && fetchSocPercent < 69 && !row.fetchAlertTriggered) {
+            row.fetchAlertTriggered = true;
+
+            const fetchNotification = new Notification(`SN${botNumber} ${siteName}`, {
+              body: `WARNING low fetch ${fetchSocPercent.toFixed(0)}%`,
+              icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+            });
+
+            fetchNotification.onclick = () => {
+          if (siteNumber) {
+              window.open(
+                `${baseMbotUrl.replace("xx", siteNumber)}`,
+                "_blank",
+                "noopener,noreferrer,width=800,height=600"
+              );
+            }
+            };
+          } else if (fetchSocPercent >= 69) {
+            row.fetchAlertTriggered = false;
+          }
+
           updateAuxSoc(auxSocElement, auxSocPercent);
           updateFetchSoc(fetchSocElement, fetchSocPercent);
 
@@ -627,6 +712,23 @@ function updateSocValues() {
       console.error("Error updating SOC values for row:", row, error);
     }
   });
+}
+
+function getSiteNumber(siteName) {
+  for (const pod in siteMappings) {
+    if (!siteMappings.hasOwnProperty(pod)) continue;
+    const site = siteMappings[pod].find((s) => s.name === siteName);
+    if (site) return site.number;
+  }
+  return null;
+}
+
+function getSiteByName(siteName) {
+  for (const pod in siteMappings) {
+    if (!siteMappings.hasOwnProperty(pod)) continue;
+    const site = siteMappings[pod].find((s) => s.name === siteName);
+    if (site) return site;
+  }
 }
 
 function getSiteNameFromRow(row) {
@@ -644,7 +746,6 @@ function applyAllFilters() {
     return acc;
   }, {});
 
-  // Clear old notifications once
   const container = document.getElementById("notification-container");
   if (container) {
     while (container.firstChild) {
@@ -766,33 +867,6 @@ async function main() {
   }
 
   await fetchRobotData(sessionId);
-  setInterval(() => fetchRobotData(sessionId), 3000);
-  applyGlobalFailureHighlight();
-
-  if (theadRow) {
-    CreateHeaderRow();
-  }
-
-  function getSiteNameFromRow(row) {
-    const tdWithTitle = row.querySelector("td[title]");
-    return tdWithTitle ? tdWithTitle.getAttribute("title") : "";
-  }
-
-  function applyButtonStyles(btn) {
-    btn.style.position = "fixed";
-    btn.style.zIndex = 9999;
-    btn.style.padding = "10px 20px";
-    btn.style.backgroundColor = COLORS.primary;
-    btn.style.color = COLORS.white;
-    btn.style.border = "none";
-    btn.style.borderRadius = "5px";
-    btn.style.cursor = "pointer";
-    btn.style.fontWeight = "bold";
-    btn.style.fontSize = "14px";
-    btn.style.boxShadow = "0px 2px 5px rgba(0,0,0,0.3)";
-  }
-
-  highlightRows();
 
   const observer = new MutationObserver(() => {
     applyAllFilters();
@@ -820,6 +894,7 @@ async function main() {
       const ddButton = document.createElement("button");
       ddButton.textContent = " DD ";
       ddButton.className = "dd-button";
+      ddButton.classList.add("animated-button");
       Object.assign(ddButton.style, {
         padding: "10px 20px",
         cursor: "pointer",
@@ -858,6 +933,8 @@ async function main() {
       const mbotButton = document.createElement("button");
       mbotButton.textContent = "MB";
       mbotButton.className = "mbot-button";
+      mbotButton.classList.add("animated-button");
+
       Object.assign(mbotButton.style, {
         padding: "10px 20px",
         cursor: "pointer",
@@ -892,6 +969,7 @@ async function main() {
       const fcButton = document.createElement("button");
       fcButton.textContent = "FC";
       fcButton.className = "fc-button";
+      fcButton.classList.add("animated-button");
       Object.assign(fcButton.style, {
         padding: "10px 20px",
         cursor: "pointer",
@@ -941,6 +1019,7 @@ async function main() {
         const icButton = document.createElement("button");
         icButton.textContent = "IC";
         icButton.className = "ic-button";
+        icButton.classList.add("animated-button");
         Object.assign(icButton.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -991,44 +1070,157 @@ async function main() {
         addICButton();
       }
 
-      const failObserver = new MutationObserver(() => {
-        const existingIC = row.querySelector(".ic-button");
-        if (row.querySelector('div[title*="FAILED"]')) {
-          if (!existingIC) {
-            if (row.style.display !== "none") {
-              const titleCell = row.querySelector(
-                "td.activity_tableCell__B55ET"
-              );
-              const numberCell = row.querySelector(
-                "td.activity_tableCellHighlight__apWjX"
-              );
-              const siteName = titleCell
-                ? titleCell.textContent.trim()
-                : "Unknown Site";
-              const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-              const botNumber = numberCell
-                ? numberCell.textContent.trim()
-                : "UnknownSN";
-              const notificationtext = `${siteName} Site${siteNumber} SN${botNumber} - failed`;
+const failObserver = new MutationObserver(() => {
+  const existingIC = row.querySelector(".ic-button");
+  if (row.querySelector('div[title*="FAILED"]')) {
+    if (!existingIC && row.style.display !== "none") {
+      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
+      const siteName = titleCell ? titleCell.textContent.trim() : "Unknown Site";
+      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+      const botNumber = numberCell ? numberCell.textContent.trim() : "UnknownSN";
 
-              const failed = new Notification("Failed", {
-                body: notificationtext,
-                icon: "	https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
-              });
-              setTimeout(() => failed.close(), 10 * 1000);
-            }
-            addICButton();
-          }
-        } else if (existingIC) {
-          existingIC.remove();
-        }
-      });
+      const site = getSiteByName(siteName);
 
-      failObserver.observe(row, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
+      const notificationText = `${siteName} Site${siteNumber} SN${botNumber} - failed`;
+
+      if (site && site.projectX) {
+        const failedNotification = new Notification("Failed", {
+          body: notificationText,
+          icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+        });
+
+        failedNotification.onclick = () => {
+          window.open(
+            `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${botNumber}/dashboard/`,
+            "_blank",
+            "noopener,noreferrer,width=860,height=540"
+          );
+        };
+        setTimeout(() => failedNotification.close(), 10 * 1000);
+      }
+
+      addICButton();
+    }
+  } else if (existingIC) {
+    existingIC.remove();
+  }
+});
+
+failObserver.observe(row, {
+  childList: true,
+  characterData: true,
+  subtree: true,
+});
+
+
+      function addICButton2() {
+        if (row.querySelector(".ic2-button")) return;
+
+        const ic2Button = document.createElement("button");
+        ic2Button.textContent = "IC";
+        ic2Button.className = "ic2-button";
+        ic2Button.classList.add("animated-button");
+        Object.assign(ic2Button.style, {
+          padding: "10px 20px",
+          cursor: "pointer",
+          marginRight: "10px",
+          fontSize: "14px",
+          fontWeight: "bold",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box",
+          minWidth: "60px",
+          border: "none",
+          color: COLORS.white,
+          backgroundColor: "#007bff",
+          borderRadius: "5px",
+          position: "relative",
+        });
+
+        ic2Button.addEventListener("click", () => {
+          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+          const numberCell = row.querySelector(
+            "td.activity_tableCellHighlight__apWjX"
+          );
+          const siteName = titleCell
+            ? titleCell.textContent.trim()
+            : "Unknown Site";
+          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+          const botNumber = numberCell
+            ? numberCell.textContent.trim()
+            : "UnknownSN";
+          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - `;
+
+          navigator.clipboard
+            .writeText(clipboardText)
+            .then(() => console.log("Copied:", clipboardText))
+            .catch((err) => console.error(err));
+
+          window.open(
+            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
+            "_blank",
+            "noopener,noreferrer,width=800,height=600"
+          );
+        });
+
+        buttonContainer.appendChild(ic2Button);
+        setTimeout(() => ic2Button.remove(), 3000);
+      }
+
+        function addCSButton2() {
+        if (row.querySelector(".cs2-button")) return;
+
+        const cs2Button = document.createElement("button");
+        cs2Button.textContent = "CS";
+        cs2Button.className = "cs2-button";
+        cs2Button.classList.add("animated-button");
+        Object.assign(cs2Button.style, {
+          padding: "10px 20px",
+          cursor: "pointer",
+          marginRight: "10px",
+          fontSize: "14px",
+          fontWeight: "bold",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          textAlign: "center",
+          boxSizing: "border-box",
+          minWidth: "60px",
+          border: "none",
+          color: COLORS.white,
+          backgroundColor: "#007bff",
+          borderRadius: "5px",
+          position: "relative",
+        });
+
+        cs2Button.addEventListener("click", () => {
+          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+          const numberCell = row.querySelector(
+            "td.activity_tableCellHighlight__apWjX"
+          );
+          const siteName = titleCell
+            ? titleCell.textContent.trim()
+            : "Unknown Site";
+          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+          const botNumber = numberCell
+            ? numberCell.textContent.trim()
+            : "UnknownSN";
+          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - `;
+
+          navigator.clipboard
+            .writeText(clipboardText)
+            .then(() => console.log("Copied:", clipboardText))
+            .catch((err) => console.error(err));
+
+          window.open(
+            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+            "_blank",
+            "noopener,noreferrer,width=800,height=600"
+          );
+        });
+
+        buttonContainer.appendChild(cs2Button);
+        setTimeout(() => cs2Button.remove(), 3000);
+      }
 
       function addCSButton() {
         if (row.querySelector(".cs-button")) return;
@@ -1036,6 +1228,7 @@ async function main() {
         const csButton = document.createElement("button");
         csButton.textContent = "CS";
         csButton.className = "cs-button";
+        csButton.classList.add("animated-button");
         Object.assign(csButton.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -1108,6 +1301,13 @@ async function main() {
               body: notificationtext,
               icon: "	https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
             });
+          unestopped.onclick = () => {
+          window.open(
+            `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${botNumber}/dashboard/`,
+            "_blank",
+            "noopener,noreferrer,width=860,height=540"
+          );
+        };
             setTimeout(() => unestopped.close(), 10 * 1000);
           }
           existingCS.remove();
@@ -1125,6 +1325,7 @@ async function main() {
         const crButton = document.createElement("button");
         crButton.textContent = "CS";
         crButton.className = "cr-button";
+        crButton.classList.add("animated-button");
         Object.assign(crButton.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -1211,6 +1412,8 @@ async function main() {
             if (existing) existing.remove();
           }
         }
+        else {
+          }
       }
 
       processfourthCell(fourthCell, phaseCell);
@@ -1235,24 +1438,33 @@ async function main() {
       } else {
         row.appendChild(buttonContainer);
       }
+
+const siteTitle = row.querySelector("td.activity_firstCol__scW3o");
+if (siteTitle) {
+  siteTitle.style.cursor = "pointer";
+
+  siteTitle.addEventListener("click", () => {
+    const icExists = row.querySelector(".ic-button");
+    const csExists = row.querySelector(".cs-button");
+    const crExists = row.querySelector(".cr-button");
+
+    if (!icExists && !row.querySelector(".ic2-button")) {
+      const ic2Button = addICButton2();
+      setTimeout(() => ic2Button?.remove(), 3000);
+    }
+
+    if (!csExists && !crExists && !row.querySelector(".cs2-button")) {
+      const cs2Button = addCSButton2();
+      setTimeout(() => cs2Button?.remove(), 3000);
+    }
+  });
+}
+
+
+
     });
 
-    function getSiteNumber(siteName) {
-      for (const pod in siteMappings) {
-        if (!siteMappings.hasOwnProperty(pod)) continue;
-        const site = siteMappings[pod].find((s) => s.name === siteName);
-        if (site) return site.number;
-      }
-      return null;
-    }
 
-    function getSiteByName(siteName) {
-      for (const pod in siteMappings) {
-        if (!siteMappings.hasOwnProperty(pod)) continue;
-        const site = siteMappings[pod].find((s) => s.name === siteName);
-        if (site) return site;
-      }
-    }
   }
 
   function highlightSpareBots() {
@@ -1288,13 +1500,6 @@ async function main() {
       }
     });
   }
-
-  highlightSpareBots();
-  setupSocSorting();
-  addButtonsToRows();
-
-  setInterval(addButtonsToRows, 5000);
-  setInterval(highlightSpareBots, 5000);
 
   function highlightRows() {
     const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
@@ -1353,9 +1558,6 @@ async function main() {
     });
   }
 
-  highlightRows();
-  setInterval(highlightRows, 5000);
-
   (() => {
     function createPodSelectionModal() {
       const modal = document.createElement("div");
@@ -1378,7 +1580,7 @@ async function main() {
       modal.style.padding = "20px";
       modal.style.borderRadius = "10px";
       modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
-      modal.style.width = "300px";
+      modal.style.width = "300px";/*  */
       modal.style.textAlign = "center";
 
       const infoText = document.createElement("p");
@@ -1482,7 +1684,7 @@ async function main() {
     }
 
     function insertSidebarLinks() {
-      function createButton(text, url, onClick) {
+      function createButton(text, url) {
         const button = document.createElement("button");
         button.textContent = text;
         button.style.width = "78px";
@@ -1506,8 +1708,8 @@ async function main() {
           button.style.backgroundColor = COLORS.backgroundDarker;
         });
 
-        if (onClick) {
-          button.addEventListener("click", onClick);
+        if (text === "All Mbot for Pod:") {
+          button.addEventListener("click", createPodSelectionModal);
         } else if (url) {
           button.addEventListener("click", () => {
             if (text === "Incident Form" || text === "Call Request") {
@@ -1525,38 +1727,6 @@ async function main() {
         return button;
       }
 
-      const buttonConfig = [
-        { label: "All Mbot for Pod:", onClick: createPodSelectionModal },
-        {
-          label: "Jira Forms",
-          url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form",
-        },
-        {
-          label: "Incident Form",
-          url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
-        },
-        {
-          label: "Call Request",
-          url: "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
-        },
-        {
-          label: "Run books",
-          url: "https://coda.io/d/Runbooks_d_A2-DtqJJR/Ops-Runbooks-Home-Page_su20ZBgR#Runbooks-Red-Team-View_tuyi_4z_",
-        },
-        {
-          label: "ROC Coda",
-          url: "https://coda.io/d/Robot-Operations-Center_dgAVnlqszp4/Autonomy-Phase_suLdgQth#_luqu3x52",
-        },
-        {
-          label: "Common Commands",
-          url: "https://docs.google.com/spreadsheets/d/1QBRl09EXI7lTIgEuPoGXlo6VBzPPFHLnVk-4JE6p5kg/edit?gid=1844596694#gid=1844596694",
-        },
-        {
-          label: "Autoprio History",
-          url: "https://apps.diligentrobots.io:4060/robotExclusions.html",
-        },
-      ];
-
       const activityLink = document.querySelector(
         '.Sidebar_appLink__GasPQ[href="/static/robodash/activity/"]'
       );
@@ -1567,8 +1737,8 @@ async function main() {
         container.style.gap = "8px";
         container.style.marginTop = "12px";
 
-        buttonConfig.forEach(({ label, url, onClick }) => {
-          const button = createButton(label, url, onClick);
+        buttonConfig.forEach(({ label, url }) => {
+          const button = createButton(label, url);
           container.appendChild(button);
         });
 
@@ -1579,7 +1749,6 @@ async function main() {
     }
 
     insertSidebarLinks();
-    createControlBarUI();
 
     const table = document.querySelector("table");
     if (table) {
@@ -1589,6 +1758,22 @@ async function main() {
       observer.observe(table, { childList: true, subtree: true });
     }
   })();
+
+  highlightRows();
+  addButtonsToRows();
+  fetchRobotData(sessionId);
+  highlightSpareBots();
+  CreateHeaderRow();
+  setupSocSorting();
+  applyGlobalFailureHighlight();
+
+  function Setinterval() {
+    addButtonsToRows();
+    fetchRobotData(sessionId);
+    highlightSpareBots();
+    highlightRows();
+  }
+  setInterval(Setinterval, 2000);
 }
 
 function applyGlobalFailureHighlight() {
@@ -1602,6 +1787,16 @@ function applyGlobalFailureHighlight() {
 }
 
 function CreateHeaderRow() {
+  const table = document.querySelector("table");
+  if (!table) return console.warn("Table not found, cannot create header row");
+
+  const thead = table.querySelector("thead");
+  if (!thead) return console.warn("Thead not found, cannot create header row");
+
+  const theadRow = thead.querySelector("tr");
+  if (!theadRow) return console.warn("Header row not found, cannot create header row");
+
+  // Control column
   const controlHeader = document.createElement("th");
   const controlButton = document.createElement("button");
   controlButton.className = "activity_tableHeadButton__uGLCO";
@@ -1609,6 +1804,7 @@ function CreateHeaderRow() {
   controlHeader.appendChild(controlButton);
   theadRow.insertBefore(controlHeader, theadRow.firstChild);
 
+  // SOC column
   const headers = theadRow.querySelectorAll("th");
   const socHeader = document.createElement("th");
   const socButton = document.createElement("button");
@@ -1624,6 +1820,7 @@ function CreateHeaderRow() {
   socHeader.appendChild(socButton);
   theadRow.insertBefore(socHeader, headers[3]);
 }
+
 
 function setupSocSorting() {
   const socButton = document.getElementById("soc-sort-button");
@@ -1706,6 +1903,7 @@ function createPodButton(podName, container) {
   const button = document.createElement("button");
   button.classList.add("pod-button");
   button.textContent = podName;
+  button.classList.add("animated-button");
   applyButtonStyles(button);
 
   let isActive = false;
@@ -1714,10 +1912,12 @@ function createPodButton(podName, container) {
     isActive = !isActive;
     if (isActive) {
       filterState.activePods.add(podName);
+      button.classList.add("animated-button");
       button.style.backgroundColor = COLORS.secondary;
       button.style.border = `2px solid ${COLORS.secondary}`;
     } else {
       filterState.activePods.delete(podName);
+      button.classList.add("animated-button");
       button.style.backgroundColor = COLORS.primary;
       button.style.border = "none";
     }
@@ -1771,7 +1971,7 @@ function createPodSelector(containerElement) {
     const option = document.createElement("option");
     option.value = pod;
     option.textContent = pod.toUpperCase();
-    if (pod === "4pod") option.selected = true; // 🚩 default to 4pod
+    if (pod === "4pod") option.selected = true;
     select.appendChild(option);
   });
 
@@ -1796,6 +1996,7 @@ function createPodSelector(containerElement) {
 function createTSButton(container) {
   const button = document.createElement("button");
   button.textContent = "TS";
+  button.classList.add("animated-button");
   button.classList.add("ts-button");
 
   applyButtonStyles(button);
@@ -1829,6 +2030,7 @@ function createIdleButton(container) {
   const button = document.createElement("button");
   button.textContent = "IDLE";
   button.classList.add("idle-button");
+  button.classList.add("animated-button");
   applyButtonStyles(button);
 
   let isActive = false;
@@ -1927,22 +2129,27 @@ function showNotification(message) {
   container.appendChild(notification);
 }
 
-function runOnceWhenActivityContainerExists(callback) {
+function runOnceWhenActivityRowsExist(callback, delay = 1000) {
   const interval = setInterval(() => {
-    const container = document.querySelector(
-      ".container-fluid.activity_activity__Aldg7"
-    );
-    if (container) {
+    const rows = document.querySelectorAll(".activity_tableRow__qiRKF");
+    if (rows.length > 0) {
       clearInterval(interval);
-      callback();
+      console.log("✅ Activity rows found — waiting before running script...");
+      setTimeout(() => {
+        console.log("🚀 Running script after delay...");
+        callback();
+      }, delay);
+    } else {
+      console.log("⏳ Waiting for activity rows...");
     }
   }, 1000);
 }
 
-runOnceWhenActivityContainerExists(() => {
-  console.log("✅ Activity container found — running script...");
-  createControlBarUI();
+runOnceWhenActivityRowsExist(() => {
   main();
+  createControlBarUI();
+  injectAnimations();
+
   setTimeout(() => {
     const headers = document.querySelectorAll("th");
     headers.forEach((th) => {
@@ -1955,3 +2162,69 @@ runOnceWhenActivityContainerExists(() => {
     });
   }, 2000);
 });
+
+
+
+function injectAnimations() {
+  if (document.getElementById("custom-animations")) return;
+  const style = document.createElement("style");
+  style.id = "custom-animations";
+  style.textContent = `
+    :root {
+      --color-primary: #2a2d36;
+      --color-secondary: #569cd6;
+      --color-bg-dark: #1b1c1f;
+      --color-success: #4caf50;
+      --color-failure: #f44336;
+    }
+
+    .animated-button {
+      transition:
+        background-color 0.25s ease,
+        transform 0.15s ease,
+        box-shadow 0.3s ease;
+    }
+
+    .animated-button:hover {
+      background-color: var(--color-bg-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    .animated-button:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .animated-button.active {
+      background-color: var(--color-secondary) !important;
+      box-shadow: 0 0 10px var(--color-secondary);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .slide-up {
+      animation: slideUp 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-overlay {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    .modal-content {
+      animation: slideUp 0.3s ease forwards;
+    }
+  `;
+  document.head.appendChild(style);
+}

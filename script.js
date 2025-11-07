@@ -43,24 +43,8 @@ const siteList = [
     "3pod": "Pod A",
     "4pod": "Pod A",
     "5pod": "Pod A",
-  },
-  {
-    name: "CHLA",
-    number: "14",
-    projectX: "project-3",
-    env: "prod-2",
-    "3pod": "Pod A",
-    "4pod": "Pod A",
-    "5pod": "Pod A",
-  },
-  {
-    name: "Montage",
-    number: "17",
-    projectX: "project-3",
-    env: "prod-2",
-    "3pod": "Pod A",
-    "4pod": "Pod A",
-    "5pod": "Pod A",
+    "6pod": "Pod A",
+    "7pod": "Pod A",
   },
   {
     name: "Cedars",
@@ -70,6 +54,30 @@ const siteList = [
     "3pod": "Pod A",
     "4pod": "Pod A",
     "5pod": "Pod A",
+    "6pod": "Pod A",
+    "7pod": "Pod A",
+  },
+  {
+    name: "CHLA",
+    number: "14",
+    projectX: "project-3",
+    env: "prod-2",
+    "3pod": "Pod A",
+    "4pod": "Pod A",
+    "5pod": "Pod A",
+    "6pod": "Pod A",
+    "7pod": "Pod A",
+  },
+  {
+    name: "Montage",
+    number: "17",
+    projectX: "project-3",
+    env: "prod-2",
+    "3pod": "Pod A",
+    "4pod": "Pod A",
+    "5pod": "Pod A",
+    "6pod": "Pod A",
+    "7pod": "Pod B",
   },
   {
     name: "Providence St John",
@@ -79,60 +87,41 @@ const siteList = [
     "3pod": "Pod A",
     "4pod": "Pod A",
     "5pod": "Pod A",
+    "6pod": "Pod A",
+    "7pod": "Pod A",
   },
   {
-    name: "Endeavor Elmhurst",
-    number: "8",
-    projectX: "diligent-robotics",
-    env: "prod-2",
-    "3pod": "Pod B",
-    "4pod": "Pod B",
-    "5pod": "Pod B",
-  },
-  {
-    name: "Endeavor Edward",
+    name: "Edward",
     number: "9",
     projectX: "diligent-robotics",
     env: "prod-2",
     "3pod": "Pod B",
     "4pod": "Pod B",
     "5pod": "Pod B",
+    "6pod": "Pod B",
+    "7pod": "Pod E",
   },
   {
-    name: "Northwestern Main",
-    number: "12",
+    name: "Elmhurst",
+    number: "8",
     projectX: "diligent-robotics",
     env: "prod-2",
     "3pod": "Pod B",
     "4pod": "Pod B",
-    "5pod": "Pod E",
+    "5pod": "Pod B",
+    "6pod": "Pod B",
+    "7pod": "Pod E",
   },
   {
-    name: "Endeavor Highland Park",
+    name: "Highland Park",
     number: "29",
     projectX: "diligent-robotics",
     env: "prod-2",
     "3pod": "Pod B",
     "4pod": "Pod B",
     "5pod": "Pod B",
-  },
-  {
-    name: "ThedaCare Neenah",
-    number: "32",
-    projectX: "diligent-robotics",
-    env: "prod-2",
-    "3pod": "Pod B",
-    "4pod": "Pod B",
-    "5pod": "Pod B",
-  },
-  {
-    name: "Northwestern Central Dupage",
-    number: "38",
-    projectX: "diligent-robotics",
-    env: "prod-1",
-    "3pod": "Pod B",
-    "4pod": "Pod B",
-    "5pod": "Pod B",
+    "6pod": "Pod B",
+    "7pod": "Pod E",
   },
   {
     name: "Mosaic St Joseph",
@@ -142,51 +131,53 @@ const siteList = [
     "3pod": "Pod B",
     "4pod": "Pod B",
     "5pod": "Pod B",
+    "6pod": "Pod B",
+    "7pod": "Pod B",
   },
   {
-    name: "Rochester Unity",
-    number: "28",
-    projectX: "diligent-robotics-project-1",
-    env: "prod-3",
-    "3pod": "Pod C",
-    "4pod": "Pod C",
-    "5pod": "Pod E",
-  },
-  {
-    name: "Rochester General",
-    number: "27",
-    projectX: "diligent-robotics-project-1",
+    name: "Northwestern Main",
+    number: "12",
+    projectX: "diligent-robotics",
     env: "prod-2",
-    "3pod": "Pod C",
-    "4pod": "Pod C",
+    "3pod": "Pod B",
+    "4pod": "Pod B",
     "5pod": "Pod E",
+    "6pod": "Pod E",
+    "7pod": "Pod F",
   },
   {
-    name: "THE Ohio State University",
-    number: "36",
+    name: "Northwestern Central Dupage",
+    number: "38",
+    projectX: "diligent-robotics",
+    env: "prod-1",
+    "3pod": "Pod B",
+    "4pod": "Pod B",
+    "5pod": "Pod B",
+    "6pod": "Pod E",
+    "7pod": "Pod F",
+  },
+  {
+    name: "Shawn Jenkins (SJCH)",
+    number: "42",
+    projectX: "diligent-robotics-project-1",
+    env: "prod-1",
+    "3pod": "Pod C",
+    "4pod": "Pod A",
+    "5pod": "Pod A",
+    "6pod": "Pod C",
+    "7pod": "Pod E",
+  },
+  
+  {
+    name: "CHOP",
+    number: "1",
     projectX: "diligent-robotics-project-1",
     env: "prod-1",
     "3pod": "Pod C",
     "4pod": "Pod C",
     "5pod": "Pod C",
-  },
-  {
-    name: "Valley Health VA",
-    number: "18",
-    projectX: "diligent-robotics-project-1",
-    env: "prod-3",
-    "3pod": "Pod C",
-    "4pod": "Pod C",
-    "5pod": "Pod C",
-  },
-  {
-    name: "Mary Washington",
-    number: "5",
-    projectX: "diligent-robotics-project-1",
-    env: "prod-2",
-    "3pod": "Pod C",
-    "4pod": "Pod C",
-    "5pod": "Pod C",
+    "6pod": "Pod F",
+    "7pod": "Pod C",
   },
   {
     name: "Christiana Care",
@@ -196,15 +187,63 @@ const siteList = [
     "3pod": "Pod C",
     "4pod": "Pod C",
     "5pod": "Pod C",
+    "6pod": "Pod E",
+    "7pod": "Pod C",
   },
   {
-    name: "MUSC Shawn Jenkins",
-    number: "42",
+    name: "Capital Factory",
+    number: "52",
+    projectX: "diligent-robotics",
+    env: "prod-",
+    "3pod": "Pod B",
+    "4pod": "Pod B",
+    "5pod": "Pod E",
+    "6pod": "Pod E",
+    "7pod": "Pod F",
+  },
+  {
+    name: "Mary Washington",
+    number: "5",
+    projectX: "diligent-robotics-project-1",
+    env: "prod-2",
+    "3pod": "Pod C",
+    "4pod": "Pod C",
+    "5pod": "Pod C",
+    "6pod": "Pod C",
+    "7pod": "Pod C",
+  },
+  {
+    name: "THE Ohio State University",
+    number: "36",
     projectX: "diligent-robotics-project-1",
     env: "prod-1",
     "3pod": "Pod C",
     "4pod": "Pod C",
     "5pod": "Pod C",
+    "6pod": "Pod C",
+    "7pod": "Pod C",
+  },
+  {
+    name: "Valley Health",
+    number: "18",
+    projectX: "diligent-robotics-project-1",
+    env: "prod-3",
+    "3pod": "Pod C",
+    "4pod": "Pod A",
+    "5pod": "Pod C",
+    "6pod": "Pod C",
+    "7pod": "Pod F",
+  },
+    {
+    name: "ThedaCare Neenah",
+    number: "32",
+    projectX: "diligent-robotics",
+    env: "prod-2",
+    "3pod": "Pod B",
+    "4pod": "Pod B",
+    "5pod": "Pod B",
+    "6pod": "Pod B",
+    "7pod": "Pod B",
   },
   {
     name: "Carilion New River Valley",
@@ -214,24 +253,8 @@ const siteList = [
     "3pod": "Pod C",
     "4pod": "Pod C",
     "5pod": "Pod C",
-  },
-  {
-    name: "UTSW Cancer Center",
-    number: "44",
-    projectX: "diligent-robotics",
-    env: "prod-1",
-    "3pod": "Pod A",
-    "4pod": "Pod D",
-    "5pod": "Pod D",
-  },
-  {
-    name: "UTSW-Dallas",
-    number: "15",
-    projectX: "diligent-robotics",
-    env: "prod-2",
-    "3pod": "Pod A",
-    "4pod": "Pod D",
-    "5pod": "Pod D",
+    "6pod": "Pod E",
+    "7pod": "Pod G",
   },
   {
     name: "El Paso Children",
@@ -241,6 +264,8 @@ const siteList = [
     "3pod": "Pod B",
     "4pod": "Pod D",
     "5pod": "Pod D",
+    "6pod": "Pod D",
+    "7pod": "Pod c",
   },
   {
     name: "UTHSA",
@@ -250,6 +275,8 @@ const siteList = [
     "3pod": "Pod B",
     "4pod": "Pod D",
     "5pod": "Pod D",
+    "6pod": "Pod D",
+    "7pod": "Pod D",
   },
   {
     name: "Shannon Health",
@@ -259,6 +286,8 @@ const siteList = [
     "3pod": "Pod A",
     "4pod": "Pod D",
     "5pod": "Pod D",
+    "6pod": "Pod C",
+    "7pod": "Pod D",
   },
   {
     name: "UTMB",
@@ -268,17 +297,67 @@ const siteList = [
     "3pod": "Pod C",
     "4pod": "Pod D",
     "5pod": "Pod D",
+    "6pod": "Pod D",
+    "7pod": "Pod D",
+  },
+  {
+    name: "UTSW Cancer Center",
+    number: "44",
+    projectX: "diligent-robotics",
+    env: "prod-1",
+    "3pod": "Pod D",
+    "4pod": "Pod D",
+    "5pod": "Pod D",
+    "6pod": "Pod D",
+    "7pod": "Pod D",
+  },
+  {
+    name: "UTSW-Dallas",
+    number: "15",
+    projectX: "diligent-robotics",
+    env: "prod-2",
+    "3pod": "Pod A",
+    "4pod": "Pod D",
+    "5pod": "Pod D",
+    "6pod": "Pod D",
+    "7pod": "Pod D",
   },
   {
     name: "UChicago",
     number: "23",
     projectX: "diligent-robotics",
     env: "prod-2",
-    "3pod": "Pod B",
+    "3pod": "Pod A",
     "4pod": "Pod D",
     "5pod": "Pod E",
+    "6pod": "Pod F",
+    "7pod": "Pod B",
+  },
+  {
+    name: "Rochester General",
+    number: "27",
+    projectX: "diligent-robotics-project-1",
+    env: "prod-2",
+    "3pod": "Pod C",
+    "4pod": "Pod C",
+    "5pod": "Pod E",
+    "6pod": "Pod F",
+    "7pod": "Pod G",
+  },
+  {
+    name: "Rochester Unity",
+    number: "28",
+    projectX: "diligent-robotics-project-1",
+    env: "prod-3",
+    "3pod": "Pod C",
+    "4pod": "Pod C",
+    "5pod": "Pod E",
+    "6pod": "Pod F",
+    "7pod": "Pod G",
   },
 ];
+
+
 
 const buttonConfig = [
   { label: "All Mbot for Pod:" },
@@ -567,13 +646,15 @@ function updateSocValues() {
     try {
       const statusDiv = row.querySelector("td:nth-child(3) .d-flex");
       const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
+      const numberCell = row.querySelector(
+        "td.activity_tableCellHighlight__apWjX"
+      );
       const baseMbotUrl = "https://sitexx.diligentrobots.io/app/mbot";
 
       if (!titleCell || !numberCell || !statusDiv) return;
 
       const siteName = titleCell.textContent.trim();
-      const siteNumber = getSiteNumber(siteName) || "UnknownNumber"; 
+      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
       const botNumber = numberCell.textContent.trim();
       let auxSocElement = row.querySelector(".aux-soc");
       let fetchSocElement = row.querySelector(".fetch-soc");
@@ -656,43 +737,57 @@ function updateSocValues() {
             element.style.color = color;
           };
 
-          if (row.style.display !== "none" && auxSocPercent < 39 && !row.auxAlertTriggered) {
+          if (
+            row.style.display !== "none" &&
+            auxSocPercent < 39 &&
+            !row.auxAlertTriggered
+          ) {
             row.auxAlertTriggered = true;
 
-            const auxNotification = new Notification(`SN${botNumber} ${siteName}`, {
-              body: `WARNING low aux ${auxSocPercent.toFixed(0)}%`,
-              icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
-            });
+            const auxNotification = new Notification(
+              `SN${botNumber} ${siteName}`,
+              {
+                body: `WARNING low aux ${auxSocPercent.toFixed(0)}%`,
+                icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+              }
+            );
 
             auxNotification.onclick = () => {
-            if (siteNumber) {
-              window.open(
-                `${baseMbotUrl.replace("xx", siteNumber)}`,
-                "_blank",
-                "noopener,noreferrer,width=800,height=600"
-              );
-            }
+              if (siteNumber) {
+                window.open(
+                  `${baseMbotUrl.replace("xx", siteNumber)}`,
+                  "_blank",
+                  "noopener,noreferrer,width=800,height=600"
+                );
+              }
             };
           } else if (auxSocPercent >= 39) {
             row.auxAlertTriggered = false;
           }
 
-          if (row.style.display !== "none" && fetchSocPercent < 69 && !row.fetchAlertTriggered) {
+          if (
+            row.style.display !== "none" &&
+            fetchSocPercent < 69 &&
+            !row.fetchAlertTriggered
+          ) {
             row.fetchAlertTriggered = true;
 
-            const fetchNotification = new Notification(`SN${botNumber} ${siteName}`, {
-              body: `WARNING low fetch ${fetchSocPercent.toFixed(0)}%`,
-              icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
-            });
+            const fetchNotification = new Notification(
+              `SN${botNumber} ${siteName}`,
+              {
+                body: `WARNING low fetch ${fetchSocPercent.toFixed(0)}%`,
+                icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+              }
+            );
 
             fetchNotification.onclick = () => {
-          if (siteNumber) {
-              window.open(
-                `${baseMbotUrl.replace("xx", siteNumber)}`,
-                "_blank",
-                "noopener,noreferrer,width=800,height=600"
-              );
-            }
+              if (siteNumber) {
+                window.open(
+                  `${baseMbotUrl.replace("xx", siteNumber)}`,
+                  "_blank",
+                  "noopener,noreferrer,width=800,height=600"
+                );
+              }
             };
           } else if (fetchSocPercent >= 69) {
             row.fetchAlertTriggered = false;
@@ -1013,14 +1108,12 @@ async function main() {
       buttonContainer.appendChild(fcButton);
       buttonContainer.appendChild(mbotButton);
 
-      function addICButton() {
-        if (row.querySelector(".ic-button")) return;
-
-        const icButton = document.createElement("button");
-        icButton.textContent = "IC";
-        icButton.className = "ic-button";
-        icButton.classList.add("animated-button");
-        Object.assign(icButton.style, {
+      function createticketButton(label, className, bgColor, onClick) {
+        const btn = document.createElement("button");
+        btn.textContent = label;
+        btn.className = className;
+        btn.classList.add("animated-button");
+        Object.assign(btn.style, {
           padding: "10px 20px",
           cursor: "pointer",
           marginRight: "10px",
@@ -1032,36 +1125,47 @@ async function main() {
           minWidth: "60px",
           border: "none",
           color: COLORS.white,
-          backgroundColor: "#007bff",
+          backgroundColor: bgColor,
           borderRadius: "5px",
           position: "relative",
         });
+        btn.addEventListener("click", onClick);
+        return btn;
+      }
 
-        icButton.addEventListener("click", () => {
-          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-          const numberCell = row.querySelector(
-            "td.activity_tableCellHighlight__apWjX"
-          );
-          const siteName = titleCell
-            ? titleCell.textContent.trim()
-            : "Unknown Site";
-          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-          const botNumber = numberCell
-            ? numberCell.textContent.trim()
-            : "UnknownSN";
-          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - `;
+      function addICButton() {
+        if (row.querySelector(".ic-button")) return;
 
-          navigator.clipboard
-            .writeText(clipboardText)
-            .then(() => console.log("Copied:", clipboardText))
-            .catch((err) => console.error(err));
+        const icButton = createticketButton(
+          "IC",
+          "ic-button",
+          "#007bff",
+          () => {
+            const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+            const numberCell = row.querySelector(
+              "td.activity_tableCellHighlight__apWjX"
+            );
+            const siteName = titleCell
+              ? titleCell.textContent.trim()
+              : "Unknown Site";
+            const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+            const botNumber = numberCell
+              ? numberCell.textContent.trim()
+              : "UnknownSN";
+            const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - `;
 
-          window.open(
-            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
-            "_blank",
-            "noopener,noreferrer,width=800,height=600"
-          );
-        });
+            navigator.clipboard
+              .writeText(clipboardText)
+              .then(() => console.log("Copied:", clipboardText))
+              .catch((err) => console.error(err));
+
+            window.open(
+              "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/560?from=directory",
+              "_blank",
+              "noopener,noreferrer,width=800,height=600"
+            );
+          }
+        );
 
         buttonContainer.appendChild(icButton);
       }
@@ -1070,49 +1174,54 @@ async function main() {
         addICButton();
       }
 
-const failObserver = new MutationObserver(() => {
-  const existingIC = row.querySelector(".ic-button");
-  if (row.querySelector('div[title*="FAILED"]')) {
-    if (!existingIC && row.style.display !== "none") {
-      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
-      const siteName = titleCell ? titleCell.textContent.trim() : "Unknown Site";
-      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-      const botNumber = numberCell ? numberCell.textContent.trim() : "UnknownSN";
+      const failObserver = new MutationObserver(() => {
+        const existingIC = row.querySelector(".ic-button");
+        if (row.querySelector('div[title*="FAILED"]')) {
+          if (!existingIC && row.style.display !== "none") {
+            const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+            const numberCell = row.querySelector(
+              "td.activity_tableCellHighlight__apWjX"
+            );
+            const siteName = titleCell
+              ? titleCell.textContent.trim()
+              : "Unknown Site";
+            const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+            const botNumber = numberCell
+              ? numberCell.textContent.trim()
+              : "UnknownSN";
 
-      const site = getSiteByName(siteName);
+            const site = getSiteByName(siteName);
 
-      const notificationText = `${siteName} Site${siteNumber} SN${botNumber} - failed`;
+            const notificationText = `${siteName} Site${siteNumber} SN${botNumber} - failed`;
 
-      if (site && site.projectX) {
-        const failedNotification = new Notification("Failed", {
-          body: notificationText,
-          icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
-        });
+            if (site && site.projectX) {
+              const failedNotification = new Notification("Failed", {
+                body: notificationText,
+                icon: "https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
+              });
 
-        failedNotification.onclick = () => {
-          window.open(
-            `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${botNumber}/dashboard/`,
-            "_blank",
-            "noopener,noreferrer,width=860,height=540"
-          );
-        };
-        setTimeout(() => failedNotification.close(), 10 * 1000);
-      }
+              failedNotification.onclick = () => {
+                window.open(
+                  `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${botNumber}/dashboard/`,
+                  "_blank",
+                  "noopener,noreferrer,width=860,height=540"
+                );
+              };
+              setTimeout(() => failedNotification.close(), 10 * 1000);
+            }
 
-      addICButton();
-    }
-  } else if (existingIC) {
-    existingIC.remove();
-  }
-});
+            addICButton();
+          }
+        } else if (existingIC) {
+          existingIC.remove();
+        }
+      });
 
-failObserver.observe(row, {
-  childList: true,
-  characterData: true,
-  subtree: true,
-});
-
+      failObserver.observe(row, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
 
       function addICButton2() {
         if (row.querySelector(".ic2-button")) return;
@@ -1168,7 +1277,7 @@ failObserver.observe(row, {
         setTimeout(() => ic2Button.remove(), 3000);
       }
 
-        function addCSButton2() {
+      function addCSButton2() {
         if (row.querySelector(".cs2-button")) return;
 
         const cs2Button = document.createElement("button");
@@ -1301,13 +1410,13 @@ failObserver.observe(row, {
               body: notificationtext,
               icon: "	https://fleet.diligentrobots.io/static/robodash/images/blue-gripper.png",
             });
-          unestopped.onclick = () => {
-          window.open(
-            `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${botNumber}/dashboard/`,
-            "_blank",
-            "noopener,noreferrer,width=860,height=540"
-          );
-        };
+            unestopped.onclick = () => {
+              window.open(
+                `https://automate.dronedeploy.com/project/${site.projectX}/robots/moxi${botNumber}/dashboard/`,
+                "_blank",
+                "noopener,noreferrer,width=860,height=540"
+              );
+            };
             setTimeout(() => unestopped.close(), 10 * 1000);
           }
           existingCS.remove();
@@ -1319,118 +1428,82 @@ failObserver.observe(row, {
         subtree: true,
       });
 
-      function addCRButton() {
-        if (row.querySelector(".cr-button")) return;
+      // Add CR button (for loading/unloading robots)
+function addCRButton() {
+  if (row.querySelector(".cr-button")) return;
 
-        const crButton = document.createElement("button");
-        crButton.textContent = "CS";
-        crButton.className = "cr-button";
-        crButton.classList.add("animated-button");
-        Object.assign(crButton.style, {
-          padding: "10px 20px",
-          cursor: "pointer",
-          marginRight: "10px",
-          fontSize: "14px",
-          fontWeight: "bold",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          textAlign: "center",
-          boxSizing: "border-box",
-          minWidth: "60px",
-          border: "none",
-          color: COLORS.white,
-          backgroundColor: "#007bff",
-          borderRadius: "5px",
-          position: "relative",
-        });
+  const cells = row.querySelectorAll("td");
+  const phase = (cells[5]?.textContent || "").toLowerCase();
 
-        crButton.addEventListener("click", () => {
-          const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-          const numberCell = row.querySelector(
-            "td.activity_tableCellHighlight__apWjX"
-          );
-          const siteName = titleCell
-            ? titleCell.textContent.trim()
-            : "Unknown Site";
-          const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-          const botNumber = numberCell
-            ? numberCell.textContent.trim()
-            : "UnknownSN";
+  let unit = "";
+  let action = "";
 
-          const cells = row.querySelectorAll("td");
-          const phase = cells[5]
-            ? cells[5].textContent.trim().toLowerCase()
-            : "";
+  if (phase === "loading") {
+    unit = cells[7]?.textContent.trim() || "UnknownUnit";
+    action = "load";
+  } else if (phase === "unloading") {
+    unit = cells[8]?.textContent.trim() || "UnknownUnit";
+    action = "unload";
+  } else {
+    return; // do not add button if not loading/unloading
+  }
 
-          let unit = "";
-          let action = "";
+  const crButton = createticketButton(
+    "CS",
+    "cr-button",
+    "#007bff",
+    () => {
+      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
 
-          if (phase === "loading") {
-            unit = cells[7] ? cells[7].textContent.trim() : "UnknownUnit";
-            action = "load";
-          } else if (phase === "unloading") {
-            unit = cells[8] ? cells[8].textContent.trim() : "UnknownUnit";
-            action = "unload";
-          }
+      const siteName = titleCell ? titleCell.textContent.trim() : "Unknown Site";
+      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+      const botNumber = numberCell ? numberCell.textContent.trim() : "UnknownSN";
 
-          const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
+      const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
+      navigator.clipboard.writeText(clipboardText)
+        .then(() => console.log("Copied:", clipboardText))
+        .catch(err => console.error(err));
 
-          navigator.clipboard
-            .writeText(clipboardText)
-            .then(() => console.log("Copied:", clipboardText))
-            .catch((err) => console.error(err));
+      window.open(
+        "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+        "_blank",
+        "noopener,noreferrer,width=800,height=600"
+      );
+    }
+  );
 
-          window.open(
-            "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
-            "_blank",
-            "noopener,noreferrer,width=800,height=600"
-          );
-        });
+  buttonContainer.appendChild(crButton);
+}
 
-        buttonContainer.appendChild(crButton);
-      }
+function processFourthCell(timeCell, phaseCell) {
+  const timeText = timeCell?.textContent.trim() || "";
+  const minutesMatch = timeText.match(/(\d+)/);
+  if (!minutesMatch) return;
 
-      const cells = row.querySelectorAll("td");
-      const fourthCell = cells[4];
-      const phaseCell = cells[5];
+  const minutes = parseInt(minutesMatch[1], 10);
+  const phase = (phaseCell?.textContent || "").toLowerCase();
 
-      function processfourthCell(cell, phaseCell) {
-        const timeText = cell.textContent.trim();
-        const minutesMatch = timeText.match(/^(\d+)(m)?$/);
+  if (minutes > 25 && (phase.includes("loading") || phase.includes("unloading"))) {
+    addCRButton();
+  } else {
+    const existing = row.querySelector(".cr-button");
+    if (existing) existing.remove();
+  }
+}
 
-        if (minutesMatch) {
-          const minutes = parseInt(minutesMatch[1], 10);
-          const phase = phaseCell
-            ? phaseCell.textContent.trim().toLowerCase()
-            : "";
+const cells = row.querySelectorAll("td");
+const fourthCell = cells[3];
+const phaseCell = cells[4];
+console.log(fourthCell);
+console.log(phaseCell);
 
-          if (minutes > 25) {
-            if (phase == "loading" || phase == "unloading") {
-              addCRButton();
-            }
-          } else {
-            const existing = row.querySelector(".cr-button");
-            if (existing) existing.remove();
-          }
-        }
-        else {
-          }
-      }
+processFourthCell(fourthCell, phaseCell);
 
-      processfourthCell(fourthCell, phaseCell);
+const crObserver = new MutationObserver(() => processFourthCell(fourthCell, phaseCell));
+crObserver.observe(fourthCell, { childList: true, characterData: true, subtree: true });
+crObserver.observe(phaseCell, { childList: true, characterData: true, subtree: true });
 
-      const crObserver = new MutationObserver(() => {
-        processfourthCell(fourthCell, phaseCell);
-      });
-      crObserver.observe(fourthCell, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
-      crObserver.observe(phaseCell, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
 
       const titleCell = row.querySelector("td.activity_tableCell__B55ET");
       if (titleCell) {
@@ -1439,32 +1512,27 @@ failObserver.observe(row, {
         row.appendChild(buttonContainer);
       }
 
-const siteTitle = row.querySelector("td.activity_firstCol__scW3o");
-if (siteTitle) {
-  siteTitle.style.cursor = "pointer";
+      const siteTitle = row.querySelector("td.activity_firstCol__scW3o");
+      if (siteTitle) {
+        siteTitle.style.cursor = "pointer";
 
-  siteTitle.addEventListener("click", () => {
-    const icExists = row.querySelector(".ic-button");
-    const csExists = row.querySelector(".cs-button");
-    const crExists = row.querySelector(".cr-button");
+        siteTitle.addEventListener("click", () => {
+          const icExists = row.querySelector(".ic-button");
+          const csExists = row.querySelector(".cs-button");
+          const crExists = row.querySelector(".cr-button");
 
-    if (!icExists && !row.querySelector(".ic2-button")) {
-      const ic2Button = addICButton2();
-      setTimeout(() => ic2Button?.remove(), 3000);
-    }
+          if (!icExists && !row.querySelector(".ic2-button")) {
+            const ic2Button = addICButton2();
+            setTimeout(() => ic2Button?.remove(), 3000);
+          }
 
-    if (!csExists && !crExists && !row.querySelector(".cs2-button")) {
-      const cs2Button = addCSButton2();
-      setTimeout(() => cs2Button?.remove(), 3000);
-    }
-  });
-}
-
-
-
+          if (!csExists && !crExists && !row.querySelector(".cs2-button")) {
+            const cs2Button = addCSButton2();
+            setTimeout(() => cs2Button?.remove(), 3000);
+          }
+        });
+      }
     });
-
-
   }
 
   function highlightSpareBots() {
@@ -1580,7 +1648,7 @@ if (siteTitle) {
       modal.style.padding = "20px";
       modal.style.borderRadius = "10px";
       modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
-      modal.style.width = "300px";/*  */
+      modal.style.width = "300px"; /*  */
       modal.style.textAlign = "center";
 
       const infoText = document.createElement("p");
@@ -1794,7 +1862,8 @@ function CreateHeaderRow() {
   if (!thead) return console.warn("Thead not found, cannot create header row");
 
   const theadRow = thead.querySelector("tr");
-  if (!theadRow) return console.warn("Header row not found, cannot create header row");
+  if (!theadRow)
+    return console.warn("Header row not found, cannot create header row");
 
   // Control column
   const controlHeader = document.createElement("th");
@@ -1820,7 +1889,6 @@ function CreateHeaderRow() {
   socHeader.appendChild(socButton);
   theadRow.insertBefore(socHeader, headers[3]);
 }
-
 
 function setupSocSorting() {
   const socButton = document.getElementById("soc-sort-button");
@@ -1967,7 +2035,7 @@ function createPodSelector(containerElement) {
   select.style.outline = "none";
   select.style.boxShadow = `inset 0 1px 2px ${COLORS.black}`;
 
-  ["3pod", "4pod", "5pod"].forEach((pod) => {
+  ["3pod", "4pod", "5pod", "6pod", "7pod"].forEach((pod) => {
     const option = document.createElement("option");
     option.value = pod;
     option.textContent = pod.toUpperCase();
@@ -2162,8 +2230,6 @@ runOnceWhenActivityRowsExist(() => {
     });
   }, 2000);
 });
-
-
 
 function injectAnimations() {
   if (document.getElementById("custom-animations")) return;

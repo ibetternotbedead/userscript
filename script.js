@@ -35,7 +35,7 @@ const spareBots = new Set([
 ]);
 
 const siteList = [
-    {
+  {
     name: "UChicago",
     number: "23",
     projectX: "diligent-robotics",
@@ -46,7 +46,7 @@ const siteList = [
     "6pod": "Pod F",
     "7pod": "Pod B",
   },
-    {
+  {
     name: "Rochester General",
     number: "27",
     projectX: "diligent-robotics-project-1",
@@ -57,7 +57,7 @@ const siteList = [
     "6pod": "Pod F",
     "7pod": "Pod G",
   },
-    {
+  {
     name: "Cedars",
     number: "3",
     projectX: "project-3",
@@ -68,7 +68,7 @@ const siteList = [
     "6pod": "Pod A",
     "7pod": "Pod A",
   },
-    {
+  {
     name: "UTSW-Dallas",
     number: "15",
     projectX: "diligent-robotics",
@@ -79,7 +79,7 @@ const siteList = [
     "6pod": "Pod D",
     "7pod": "Pod D",
   },
-    {
+  {
     name: "Endeavor Elmhurst",
     number: "8",
     projectX: "diligent-robotics",
@@ -90,7 +90,7 @@ const siteList = [
     "6pod": "Pod B",
     "7pod": "Pod E",
   },
-    {
+  {
     name: "Northwestern Main",
     number: "12",
     projectX: "diligent-robotics",
@@ -101,7 +101,7 @@ const siteList = [
     "6pod": "Pod E",
     "7pod": "Pod F",
   },
-    {
+  {
     name: "Valley Health VA",
     number: "18",
     projectX: "diligent-robotics-project-1",
@@ -112,7 +112,7 @@ const siteList = [
     "6pod": "Pod C",
     "7pod": "Pod F",
   },
-    {
+  {
     name: "CHLA",
     number: "14",
     projectX: "project-3",
@@ -123,7 +123,7 @@ const siteList = [
     "6pod": "Pod A",
     "7pod": "Pod A",
   },
-    {
+  {
     name: "Montage",
     number: "17",
     projectX: "project-3",
@@ -134,7 +134,7 @@ const siteList = [
     "6pod": "Pod A",
     "7pod": "Pod B",
   },
-    {
+  {
     name: "Northwestern Central Dupage",
     number: "38",
     projectX: "diligent-robotics",
@@ -145,7 +145,7 @@ const siteList = [
     "6pod": "Pod E",
     "7pod": "Pod F",
   },
-    {
+  {
     name: "El Paso Children",
     number: "43",
     projectX: "diligent-robotics-project-2",
@@ -156,7 +156,7 @@ const siteList = [
     "6pod": "Pod D",
     "7pod": "Pod C",
   },
-    {
+  {
     name: "ThedaCare Neenah",
     number: "32",
     projectX: "diligent-robotics",
@@ -165,7 +165,7 @@ const siteList = [
     "4pod": "Pod B",
     "5pod": "Pod B",
     "6pod": "Pod B",
-    "7pod": "Pod B"
+    "7pod": "Pod B",
   },
   {
     name: "UTHSA",
@@ -355,8 +355,6 @@ const siteList = [
     "7pod": "Pod C",
   },
 ];
-
-
 
 const buttonConfig = [
   { label: "All Mbot for Pod:" },
@@ -551,14 +549,24 @@ async function fetchRobotData(sessionId) {
           ? robot.map_frame_id.match(/map(\d+)_/)?.[1]
           : null;
 
+        const auxSoc =
+          typeof robot?.aux_battery?.soc === "number"
+            ? robot.aux_battery.soc
+            : null;
+
+        const fetchSoc =
+          typeof robot?.fetch_battery?.soc === "number"
+            ? robot.fetch_battery.soc
+            : null;
+
         RobotData.set(elevatorId, {
-          auxSoc: robot.aux_battery.soc,
-          fetchSoc: robot.fetch_battery.soc,
+          auxSoc,
+          fetchSoc,
           mapFrameId: mapId,
-          containersState: robot.containers_state,
-          taskStatus: robot.task_status,
-          semanticRoom: robot.semantic_room,
-          currentActionInfo: robot.current_action_info,
+          containersState: robot?.containers_state ?? {},
+          taskStatus: robot?.task_status ?? "",
+          semanticRoom: robot?.semantic_room ?? "",
+          currentActionInfo: robot?.current_action_info ?? {},
         });
 
         const {
@@ -1428,78 +1436,97 @@ async function main() {
       });
 
       // Add CR button (for loading/unloading robots)
-function addCRButton() {
-  if (row.querySelector(".cr-button")) return;
+      function addCRButton() {
+        if (row.querySelector(".cr-button")) return;
 
-  const cells = row.querySelectorAll("td");
-  const phase = (cells[5]?.textContent || "").toLowerCase();
+        const cells = row.querySelectorAll("td");
+        const phase = (cells[5]?.textContent || "").toLowerCase();
 
-  let unit = "";
-  let action = "";
+        let unit = "";
+        let action = "";
 
-  if (phase === "loading") {
-    unit = cells[7]?.textContent.trim() || "UnknownUnit";
-    action = "load";
-  } else if (phase === "unloading") {
-    unit = cells[8]?.textContent.trim() || "UnknownUnit";
-    action = "unload";
-  } else {
-    return; // do not add button if not loading/unloading
-  }
+        if (phase === "loading") {
+          unit = cells[7]?.textContent.trim() || "UnknownUnit";
+          action = "load";
+        } else if (phase === "unloading") {
+          unit = cells[8]?.textContent.trim() || "UnknownUnit";
+          action = "unload";
+        } else {
+          return; // do not add button if not loading/unloading
+        }
 
-  const crButton = createticketButton(
-    "CS",
-    "cr-button",
-    "#007bff",
-    () => {
-      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
+        const crButton = createticketButton(
+          "CS",
+          "cr-button",
+          "#007bff",
+          () => {
+            const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+            const numberCell = row.querySelector(
+              "td.activity_tableCellHighlight__apWjX"
+            );
 
-      const siteName = titleCell ? titleCell.textContent.trim() : "Unknown Site";
-      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-      const botNumber = numberCell ? numberCell.textContent.trim() : "UnknownSN";
+            const siteName = titleCell
+              ? titleCell.textContent.trim()
+              : "Unknown Site";
+            const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+            const botNumber = numberCell
+              ? numberCell.textContent.trim()
+              : "UnknownSN";
 
-      const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
-      navigator.clipboard.writeText(clipboardText)
-        .then(() => console.log("Copied:", clipboardText))
-        .catch(err => console.error(err));
+            const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
+            navigator.clipboard
+              .writeText(clipboardText)
+              .then(() => console.log("Copied:", clipboardText))
+              .catch((err) => console.error(err));
 
-      window.open(
-        "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
-        "_blank",
-        "noopener,noreferrer,width=800,height=600"
+            window.open(
+              "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+              "_blank",
+              "noopener,noreferrer,width=800,height=600"
+            );
+          }
+        );
+
+        buttonContainer.appendChild(crButton);
+      }
+
+      function processFourthCell(timeCell, phaseCell) {
+        const timeText = timeCell?.textContent.trim() || "";
+        const minutesMatch = timeText.match(/(\d+)/);
+        if (!minutesMatch) return;
+
+        const minutes = parseInt(minutesMatch[1], 10);
+        const phase = (phaseCell?.textContent || "").toLowerCase();
+
+        if (
+          minutes > 25 &&
+          (phase.includes("loading") || phase.includes("unloading"))
+        ) {
+          addCRButton();
+        } else {
+          const existing = row.querySelector(".cr-button");
+          if (existing) existing.remove();
+        }
+      }
+
+      const cells = row.querySelectorAll("td");
+      const fourthCell = cells[3];
+      const phaseCell = cells[4];
+      processFourthCell(fourthCell, phaseCell);
+
+      const crObserver = new MutationObserver(() =>
+        processFourthCell(fourthCell, phaseCell)
       );
-    }
-  );
-
-  buttonContainer.appendChild(crButton);
-}
-
-function processFourthCell(timeCell, phaseCell) {
-  const timeText = timeCell?.textContent.trim() || "";
-  const minutesMatch = timeText.match(/(\d+)/);
-  if (!minutesMatch) return;
-
-  const minutes = parseInt(minutesMatch[1], 10);
-  const phase = (phaseCell?.textContent || "").toLowerCase();
-
-  if (minutes > 25 && (phase.includes("loading") || phase.includes("unloading"))) {
-    addCRButton();
-  } else {
-    const existing = row.querySelector(".cr-button");
-    if (existing) existing.remove();
-  }
-}
-
-const cells = row.querySelectorAll("td");
-const fourthCell = cells[3];
-const phaseCell = cells[4];
-processFourthCell(fourthCell, phaseCell);
-
-const crObserver = new MutationObserver(() => processFourthCell(fourthCell, phaseCell));
-crObserver.observe(fourthCell, { childList: true, characterData: true, subtree: true });
-crObserver.observe(phaseCell, { childList: true, characterData: true, subtree: true });
-
+      crObserver.observe(fourthCell, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      crObserver.observe(phaseCell, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
 
       const titleCell = row.querySelector("td.activity_tableCell__B55ET");
       if (titleCell) {

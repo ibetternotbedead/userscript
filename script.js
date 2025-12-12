@@ -223,17 +223,6 @@ const siteList = [
     "7pod": "Pod G",
   },
   {
-    name: "MUSC Shawn Jenkins",
-    number: "42",
-    projectX: "diligent-robotics-project-1",
-    env: "prod-1",
-    "3pod": "Pod C",
-    "4pod": "Pod A",
-    "5pod": "Pod A",
-    "6pod": "Pod C",
-    "7pod": "Pod E",
-  },
-  {
     name: "Antelope Valley",
     number: "30",
     projectX: "project-3",
@@ -389,7 +378,7 @@ const buttonConfig = [
 ];
 
 const COLORS = {
-  primary: "#39a3b6",
+  primary: "#70c2de",
   backgroundDark: "#343a40",
   backgroundDarker: "#2e2e2e",
   white: "#ffffff",
@@ -420,7 +409,7 @@ const filterState = {
   tsOnly: false,
   selectedPodType: "4pod",
   siteMappings: {},
-  robotStatus: { IDLE: false },
+  robotStatus: { IDLE: false, OVERRIDE: false },
 };
 
 let permission = await Notification.requestPermission();
@@ -934,17 +923,34 @@ function applyAllFilters() {
         ddButtonIsRedOrOrange;
     }
 
-    let matchesIdle = true;
-    const statusCell = Array.from(
-      row.querySelectorAll("td.activity_tableCell__B55ET")
-    ).find((td) => td.title?.toLowerCase() === "idle");
+    if (filterState.robotStatus?.OVERRIDE && matchesPod && matchesTS) {
+      row.style.display = "table-row";
+      return;
+    }
 
-    if (statusCell && filterState.robotStatus?.IDLE === false) {
+    let matchesIdle = true;
+    let matchesOffline = true;
+    let matchesDash = true;
+
+    const idleElement = row.querySelector('[title="IDLE"]');
+    if (idleElement && filterState.robotStatus?.IDLE === false) {
       matchesIdle = false;
     }
 
+    const offlineElement = row.querySelector('[title="OFFLINE"]');
+    if (offlineElement) {
+      matchesOffline = false;
+    }
+
+    const cell5 = row.querySelectorAll("td")[5];
+    if (cell5 && cell5.textContent.trim() === "-") {
+      matchesDash = false;
+    }
+
     row.style.display =
-      matchesPod && matchesTS && matchesIdle ? "table-row" : "none";
+      matchesPod && matchesTS && matchesIdle && matchesOffline && matchesDash
+        ? "table-row"
+        : "none";
 
     const numberCell = row.querySelector(
       "td.activity_tableCellHighlight__apWjX"
@@ -1048,7 +1054,7 @@ async function main() {
         boxSizing: "border-box",
         minWidth: "60px",
         border: "none",
-        color: COLORS.white,
+        color: COLORS.backgroundDarker,
         backgroundColor: COLORS.primary,
         borderRadius: "5px",
         position: "relative",
@@ -1435,98 +1441,81 @@ async function main() {
         subtree: true,
       });
 
-      // Add CR button (for loading/unloading robots)
-      function addCRButton() {
-        if (row.querySelector(".cr-button")) return;
+      function addCRButton(row) {
+  const buttonContainer = row.querySelector(".button-container");
+  if (!buttonContainer || row.querySelector(".cr-button")) return;
 
-        const cells = row.querySelectorAll("td");
-        const phase = (cells[5]?.textContent || "").toLowerCase();
+  const cells = row.querySelectorAll("td");
+  const phase = (cells[7]?.textContent || "").trim().toLowerCase();
 
-        let unit = "";
-        let action = "";
+  let unit = "";
+  let action = "";
 
-        if (phase === "loading") {
-          unit = cells[7]?.textContent.trim() || "UnknownUnit";
-          action = "load";
-        } else if (phase === "unloading") {
-          unit = cells[8]?.textContent.trim() || "UnknownUnit";
-          action = "unload";
-        } else {
-          return; // do not add button if not loading/unloading
-        }
+  if (phase.includes("↘ loading")) {
+    unit = cells[8]?.textContent.trim() || "UnknownUnit";
+    action = "load";
+  } else if (phase.includes("unloading")) {
+    unit = cells[8]?.textContent.trim() || "UnknownUnit";
+    action = "unload";
+  } else {
+    return;
+  }
 
-        const crButton = createticketButton(
-          "CS",
-          "cr-button",
-          "#007bff",
-          () => {
-            const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-            const numberCell = row.querySelector(
-              "td.activity_tableCellHighlight__apWjX"
-            );
+  const crButton = createticketButton(
+    "CS",
+    "cr-button",
+    "#007bff",
+    () => {
+      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
 
-            const siteName = titleCell
-              ? titleCell.textContent.trim()
-              : "Unknown Site";
-            const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-            const botNumber = numberCell
-              ? numberCell.textContent.trim()
-              : "UnknownSN";
+      const siteName = titleCell ? titleCell.textContent.trim() : "Unknown Site";
+      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+      const botNumber = numberCell ? numberCell.textContent.trim() : "UnknownSN";
 
-            const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
-            navigator.clipboard
-              .writeText(clipboardText)
-              .then(() => console.log("Copied:", clipboardText))
-              .catch((err) => console.error(err));
+      const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
+      navigator.clipboard.writeText(clipboardText).then(() => {
+        console.log("Copied:", clipboardText);
+      });
 
-            window.open(
-              "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
-              "_blank",
-              "noopener,noreferrer,width=800,height=600"
-            );
-          }
-        );
-
-        buttonContainer.appendChild(crButton);
-      }
-
-      function processFourthCell(timeCell, phaseCell) {
-        const timeText = timeCell?.textContent.trim() || "";
-        const minutesMatch = timeText.match(/(\d+)/);
-        if (!minutesMatch) return;
-
-        const minutes = parseInt(minutesMatch[1], 10);
-        const phase = (phaseCell?.textContent || "").toLowerCase();
-
-        if (
-          minutes > 25 &&
-          (phase.includes("loading") || phase.includes("unloading"))
-        ) {
-          addCRButton();
-        } else {
-          const existing = row.querySelector(".cr-button");
-          if (existing) existing.remove();
-        }
-      }
-
-      const cells = row.querySelectorAll("td");
-      const fourthCell = cells[3];
-      const phaseCell = cells[4];
-      processFourthCell(fourthCell, phaseCell);
-
-      const crObserver = new MutationObserver(() =>
-        processFourthCell(fourthCell, phaseCell)
+      window.open(
+        "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+        "_blank",
+        "noopener,noreferrer,width=800,height=600"
       );
-      crObserver.observe(fourthCell, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
-      crObserver.observe(phaseCell, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
+    }
+  );
+
+  buttonContainer.appendChild(crButton);
+}
+
+function processFourthCell(row) {
+  const cells = row.querySelectorAll("td");
+  const timeCell = cells[6];
+  const phaseCell = cells[7];
+
+  if (!timeCell || !phaseCell) return;
+
+  const timeText = timeCell.textContent.trim();
+  const minutesMatch = timeText.match(/(\d+)/);
+  if (!minutesMatch) return;
+
+  const minutes = parseInt(minutesMatch[1], 10);
+  const phase = phaseCell.textContent.trim().toLowerCase();
+
+  if (minutes >= 1 && (phase.includes("loading") || phase.includes("unloading"))) {
+    addCRButton(row);
+  } else {
+    const existing = row.querySelector(".cr-button");
+    if (existing) existing.remove();
+  }
+
+
+  const crObserver = new MutationObserver(() => processFourthCell(row));
+  crObserver.observe(timeCell, { childList: true, characterData: true, subtree: true });
+  crObserver.observe(phaseCell, { childList: true, characterData: true, subtree: true });
+}
+
 
       const titleCell = row.querySelector("td.activity_tableCell__B55ET");
       if (titleCell) {
@@ -1597,10 +1586,13 @@ async function main() {
     rows.forEach((row) => {
       const cells = row.querySelectorAll("td");
       if (cells.length >= 4) {
-        const thirdCell = cells[3];
-        const fourthCell = cells[4];
+        const TaskTime = cells[4];
+        const phase = cells[5];
+        const phaseTime = cells[6];
 
-        function processthirdCell(cell) {
+        row.insertBefore(phaseTime, phase);
+
+        function processTaskTime(cell) {
           const timeText = cell.textContent.trim();
 
           const minutesMatch = timeText.match(/^(\d+)(m)?$/);
@@ -1622,7 +1614,7 @@ async function main() {
           }
         }
 
-        function processfourthCell(cell) {
+        function processPhaseTime(cell) {
           const timeText = cell.textContent.trim();
 
           const minutesMatch = timeText.match(/^(\d+)(m)?$/);
@@ -1643,8 +1635,8 @@ async function main() {
             cell.style.fontWeight = "";
           }
         }
-        processthirdCell(thirdCell);
-        processfourthCell(fourthCell);
+        processTaskTime(TaskTime);
+        processPhaseTime(phaseTime);
       }
     });
   }
@@ -1859,6 +1851,7 @@ async function main() {
   applyGlobalFailureHighlight();
 
   function Setinterval() {
+    highlightRows();
     addButtonsToRows();
     fetchRobotData(sessionId);
     highlightSpareBots();
@@ -1871,7 +1864,7 @@ function applyGlobalFailureHighlight() {
   const style = document.createElement("style");
   style.textContent = `
       .activity_tableRow__qiRKF:has(div[title*="FAILED"]) {
-        --bs-table-bg: #701414 !important;
+        --bs-table-bg: #b93333 !important;
       }
     `;
   document.head.appendChild(style);
@@ -1888,7 +1881,6 @@ function CreateHeaderRow() {
   if (!theadRow)
     return console.warn("Header row not found, cannot create header row");
 
-  // Control column
   const controlHeader = document.createElement("th");
   const controlButton = document.createElement("button");
   controlButton.className = "activity_tableHeadButton__uGLCO";
@@ -1896,7 +1888,6 @@ function CreateHeaderRow() {
   controlHeader.appendChild(controlButton);
   theadRow.insertBefore(controlHeader, theadRow.firstChild);
 
-  // SOC column
   const headers = theadRow.querySelectorAll("th");
   const socHeader = document.createElement("th");
   const socButton = document.createElement("button");
@@ -1944,39 +1935,6 @@ function setupSocSorting() {
   });
 }
 
-function highlightRows() {
-  const rows = document.querySelectorAll("tr.activity_tableRow__qiRKF");
-  rows.forEach((row) => {
-    const cells = row.querySelectorAll("td");
-    if (cells.length >= 4) {
-      const thirdCell = cells[2];
-      const fourthCell = cells[3];
-
-      function processCell(cell, thresholdRed, thresholdYellow) {
-        const timeText = cell.textContent.trim();
-        const minutesMatch = timeText.match(/^(\d+)(m)?$/);
-        if (minutesMatch) {
-          const minutes = parseInt(minutesMatch[1], 10);
-          if (minutes > thresholdRed) {
-            cell.style.color = COLORS.failure;
-          } else if (minutes > thresholdYellow) {
-            cell.style.color = COLORS.warning;
-          } else {
-            cell.style.color = "";
-          }
-          cell.style.fontWeight = "bold";
-        } else {
-          cell.style.color = "";
-          cell.style.fontWeight = "";
-        }
-      }
-
-      processCell(thirdCell, 60, 30);
-      processCell(fourthCell, 20, 15);
-    }
-  });
-}
-
 function applyButtonStyles(btn) {
   btn.style.zIndex = 9999;
   btn.style.padding = "10px 20px";
@@ -1997,6 +1955,8 @@ function createPodButton(podName, container) {
   button.classList.add("animated-button");
   applyButtonStyles(button);
 
+  button.style.color = COLORS.backgroundDarker;
+
   let isActive = false;
 
   button.addEventListener("click", () => {
@@ -2006,11 +1966,13 @@ function createPodButton(podName, container) {
       button.classList.add("animated-button");
       button.style.backgroundColor = COLORS.secondary;
       button.style.border = `2px solid ${COLORS.secondary}`;
+      button.style.color = COLORS.backgroundDarker;
     } else {
       filterState.activePods.delete(podName);
       button.classList.add("animated-button");
       button.style.backgroundColor = COLORS.primary;
       button.style.border = "none";
+      button.style.color = COLORS.backgroundDarker;
     }
     applyAllFilters();
   });
@@ -2093,6 +2055,7 @@ function createTSButton(container) {
   applyButtonStyles(button);
 
   button.style.position = "static";
+  button.style.color = COLORS.backgroundDarker;
 
   button.addEventListener("click", () => {
     filterState.tsOnly = !filterState.tsOnly;
@@ -2120,22 +2083,22 @@ function createTSButton(container) {
 function createIdleButton(container) {
   const button = document.createElement("button");
   button.textContent = "IDLE";
-  button.classList.add("idle-button");
-  button.classList.add("animated-button");
+  button.classList.add("idle-button", "animated-button");
   applyButtonStyles(button);
 
   let isActive = false;
 
   filterState.robotStatus = filterState.robotStatus || {};
-  filterState.robotStatus.IDLE = isActive;
+  filterState.robotStatus.OVERRIDE = false;
 
   button.style.backgroundColor = COLORS.primary;
+  button.style.color = COLORS.backgroundDarker;
   button.style.border = "none";
 
   button.addEventListener("click", () => {
     isActive = !isActive;
 
-    filterState.robotStatus.IDLE = isActive;
+    filterState.robotStatus.OVERRIDE = isActive;
 
     button.style.backgroundColor = isActive ? COLORS.secondary : COLORS.primary;
     button.style.border = isActive ? `2px solid ${COLORS.secondary}` : "none";

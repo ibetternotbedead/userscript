@@ -395,6 +395,8 @@ let RobotData = new Map();
 let busyRobotsArray = [];
 let behaviorTimerMap = new Map();
 let HardwareEstopRobots = new Set();
+let isHidden = false;
+
 const actionTypeMap = new Map();
 const timerMap = new Map();
 
@@ -662,6 +664,7 @@ function updateSocValues() {
         wrapper.style.display = "flex";
         wrapper.style.alignItems = "center";
         wrapper.style.justifyContent = "center";
+        wrapper.setAttribute(SCRIPT_ATTR, "true");
         row.insertBefore(wrapper, row.children[3] || null);
       } else {
         row.insertBefore(wrapper, row.children[3] || null);
@@ -670,12 +673,14 @@ function updateSocValues() {
       if (!auxSocElement) {
         auxSocElement = document.createElement("div");
         auxSocElement.classList.add("soc-cell", "aux-soc");
+        auxSocElement.setAttribute(SCRIPT_ATTR, "true");
         wrapper.appendChild(auxSocElement);
       }
 
       if (!fetchSocElement) {
         fetchSocElement = document.createElement("div");
         fetchSocElement.classList.add("soc-cell", "fetch-soc");
+        fetchSocElement.setAttribute(SCRIPT_ATTR, "true");
         wrapper.appendChild(fetchSocElement);
       }
 
@@ -967,21 +972,112 @@ function applyAllFilters() {
   });
 }
 
+const SCRIPT_ATTR = "data-script-added";
+let SCRIPT_ENABLED = true; 
+let masterInterval = null;
+let masterObserver = null;
+
+function toggleScript(enable) {
+  SCRIPT_ENABLED = enable;
+
+  if (enable) {
+    console.log("▶️ Script ENABLED");
+    startScript();
+  } else {
+    console.log("⏹️ Script DISABLED");
+    stopScript();
+  }
+}
+
+
+function stopScript() {
+
+  if (masterInterval) {
+    clearInterval(masterInterval);
+    masterInterval = null;
+  }
+
+
+  if (masterObserver) {
+    masterObserver.disconnect();
+    masterObserver = null;
+  }
+
+
+  document.querySelectorAll(`[${SCRIPT_ATTR}]`).forEach(el => el.remove());
+
+
+  if (typeof filterState !== "undefined") {
+    filterState.activePods?.clear();
+    filterState.tsOnly = false;
+    filterState.robotStatus = {};
+  }
+
+  console.log("Script fully disabled and cleaned up");
+}
+
+
+function startScript() {
+  main();
+
+}
+
+function insertMasterToggle() {
+  const toggle = document.createElement("button");
+  toggle.id = "scriptToggleButton";
+  toggle.textContent = SCRIPT_ENABLED
+    ? "Turn Off"
+    : "Turn On";
+  toggle.style = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    background: #333;
+    color: white;
+    border-radius: 8px;
+    z-index: 999999;
+    cursor: pointer;
+    font-size: 14px;
+  `;
+
+  toggle.onclick = () => {
+    const newState = !SCRIPT_ENABLED;
+    toggleScript(newState);
+    toggle.textContent = newState
+      ? "Turn Off"
+      : "Turn On";
+  };
+
+  document.body.appendChild(toggle);
+}
+
+
+insertMasterToggle();
+
 async function main() {
+  if (!SCRIPT_ENABLED) return;
+
   let sessionId = getSessionId();
-  while (!sessionId) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+  while (!sessionId && SCRIPT_ENABLED) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
     sessionId = getSessionId();
   }
+  if (!SCRIPT_ENABLED) return;
 
   await fetchRobotData(sessionId);
 
-  const observer = new MutationObserver(() => {
-    applyAllFilters();
+  const table = document.querySelector("table");
+  if (!table) return;
+
+  masterObserver = new MutationObserver(() => {
+    if (SCRIPT_ENABLED) applyAllFilters();
   });
 
-  const table = document.querySelector("table");
-  observer.observe(table, { childList: true, subtree: true });
+  masterObserver.observe(table, { childList: true, subtree: true });
+
+  createControlBarUI();
+  injectAnimations();
 
   function addButtonsToRows() {
     const baseDDUrl =
@@ -998,11 +1094,13 @@ async function main() {
       buttonContainer.style.display = "flex";
       buttonContainer.style.alignItems = "center";
       buttonContainer.style.marginRight = "10px";
+      buttonContainer.setAttribute(SCRIPT_ATTR, "true");
 
       const ddButton = document.createElement("button");
       ddButton.textContent = " DD ";
       ddButton.className = "dd-button";
       ddButton.classList.add("animated-button");
+      ddButton.setAttribute(SCRIPT_ATTR, "true");
       Object.assign(ddButton.style, {
         padding: "10px 20px",
         cursor: "pointer",
@@ -1042,6 +1140,7 @@ async function main() {
       mbotButton.textContent = "MB";
       mbotButton.className = "mbot-button";
       mbotButton.classList.add("animated-button");
+      mbotButton.setAttribute(SCRIPT_ATTR, "true");
 
       Object.assign(mbotButton.style, {
         padding: "10px 20px",
@@ -1078,6 +1177,7 @@ async function main() {
       fcButton.textContent = "FC";
       fcButton.className = "fc-button";
       fcButton.classList.add("animated-button");
+      fcButton.setAttribute(SCRIPT_ATTR, "true");
       Object.assign(fcButton.style, {
         padding: "10px 20px",
         cursor: "pointer",
@@ -1126,6 +1226,7 @@ async function main() {
         btn.textContent = label;
         btn.className = className;
         btn.classList.add("animated-button");
+        btn.setAttribute(SCRIPT_ATTR, "true");
         Object.assign(btn.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -1243,6 +1344,7 @@ async function main() {
         ic2Button.textContent = "IC";
         ic2Button.className = "ic2-button";
         ic2Button.classList.add("animated-button");
+        ic2Button.setAttribute(SCRIPT_ATTR, "true");
         Object.assign(ic2Button.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -1297,6 +1399,7 @@ async function main() {
         cs2Button.textContent = "CS";
         cs2Button.className = "cs2-button";
         cs2Button.classList.add("animated-button");
+        cs2Button.setAttribute(SCRIPT_ATTR, "true");
         Object.assign(cs2Button.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -1351,6 +1454,7 @@ async function main() {
         csButton.textContent = "CS";
         csButton.className = "cs-button";
         csButton.classList.add("animated-button");
+        csButton.setAttribute(SCRIPT_ATTR, "true");
         Object.assign(csButton.style, {
           padding: "10px 20px",
           cursor: "pointer",
@@ -1442,80 +1546,95 @@ async function main() {
       });
 
       function addCRButton(row) {
-  const buttonContainer = row.querySelector(".button-container");
-  if (!buttonContainer || row.querySelector(".cr-button")) return;
+        const buttonContainer = row.querySelector(".button-container");
+        if (!buttonContainer || row.querySelector(".cr-button")) return;
 
-  const cells = row.querySelectorAll("td");
-  const phase = (cells[7]?.textContent || "").trim().toLowerCase();
+        const cells = row.querySelectorAll("td");
+        const phase = (cells[7]?.textContent || "").trim().toLowerCase();
 
-  let unit = "";
-  let action = "";
+        let unit = "";
+        let action = "";
 
-  if (phase.includes("↘ loading")) {
-    unit = cells[8]?.textContent.trim() || "UnknownUnit";
-    action = "load";
-  } else if (phase.includes("unloading")) {
-    unit = cells[8]?.textContent.trim() || "UnknownUnit";
-    action = "unload";
-  } else {
-    return;
-  }
+        if (phase.includes("↘ loading")) {
+          unit = cells[8]?.textContent.trim() || "UnknownUnit";
+          action = "load";
+        } else if (phase.includes("unloading")) {
+          unit = cells[8]?.textContent.trim() || "UnknownUnit";
+          action = "unload";
+        } else {
+          return;
+        }
 
-  const crButton = createticketButton(
-    "CS",
-    "cr-button",
-    "#007bff",
-    () => {
-      const titleCell = row.querySelector("td.activity_tableCell__B55ET");
-      const numberCell = row.querySelector("td.activity_tableCellHighlight__apWjX");
+        const crButton = createticketButton(
+          "CS",
+          "cr-button",
+          "#007bff",
+          () => {
+            const titleCell = row.querySelector("td.activity_tableCell__B55ET");
+            const numberCell = row.querySelector(
+              "td.activity_tableCellHighlight__apWjX"
+            );
 
-      const siteName = titleCell ? titleCell.textContent.trim() : "Unknown Site";
-      const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
-      const botNumber = numberCell ? numberCell.textContent.trim() : "UnknownSN";
+            const siteName = titleCell
+              ? titleCell.textContent.trim()
+              : "Unknown Site";
+            const siteNumber = getSiteNumber(siteName) || "UnknownNumber";
+            const botNumber = numberCell
+              ? numberCell.textContent.trim()
+              : "UnknownSN";
 
-      const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
-      navigator.clipboard.writeText(clipboardText).then(() => {
-        console.log("Copied:", clipboardText);
-      });
+            const clipboardText = `${siteName} Site${siteNumber} SN${botNumber} - Unit ${unit} needs to ${action}`;
+            navigator.clipboard.writeText(clipboardText).then(() => {
+              console.log("Copied:", clipboardText);
+            });
 
-      window.open(
-        "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
-        "_blank",
-        "noopener,noreferrer,width=800,height=600"
-      );
-    }
-  );
+            window.open(
+              "https://diligentrobots.atlassian.net/jira/software/c/projects/DRM/form/529?from=directory",
+              "_blank",
+              "noopener,noreferrer,width=800,height=600"
+            );
+          }
+        );
 
-  buttonContainer.appendChild(crButton);
-}
+        buttonContainer.appendChild(crButton);
+      }
 
-function processFourthCell(row) {
-  const cells = row.querySelectorAll("td");
-  const timeCell = cells[6];
-  const phaseCell = cells[7];
+      function processFourthCell(row) {
+        const cells = row.querySelectorAll("td");
+        const timeCell = cells[6];
+        const phaseCell = cells[7];
 
-  if (!timeCell || !phaseCell) return;
+        if (!timeCell || !phaseCell) return;
 
-  const timeText = timeCell.textContent.trim();
-  const minutesMatch = timeText.match(/(\d+)/);
-  if (!minutesMatch) return;
+        const timeText = timeCell.textContent.trim();
+        const minutesMatch = timeText.match(/(\d+)/);
+        if (!minutesMatch) return;
 
-  const minutes = parseInt(minutesMatch[1], 10);
-  const phase = phaseCell.textContent.trim().toLowerCase();
+        const minutes = parseInt(minutesMatch[1], 10);
+        const phase = phaseCell.textContent.trim().toLowerCase();
 
-  if (minutes >= 1 && (phase.includes("loading") || phase.includes("unloading"))) {
-    addCRButton(row);
-  } else {
-    const existing = row.querySelector(".cr-button");
-    if (existing) existing.remove();
-  }
+        if (
+          minutes >= 1 &&
+          (phase.includes("loading") || phase.includes("unloading"))
+        ) {
+          addCRButton(row);
+        } else {
+          const existing = row.querySelector(".cr-button");
+          if (existing) existing.remove();
+        }
 
-
-  const crObserver = new MutationObserver(() => processFourthCell(row));
-  crObserver.observe(timeCell, { childList: true, characterData: true, subtree: true });
-  crObserver.observe(phaseCell, { childList: true, characterData: true, subtree: true });
-}
-
+        const crObserver = new MutationObserver(() => processFourthCell(row));
+        crObserver.observe(timeCell, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+        crObserver.observe(phaseCell, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      }
 
       const titleCell = row.querySelector("td.activity_tableCell__B55ET");
       if (titleCell) {
@@ -1566,6 +1685,7 @@ function processFourthCell(row) {
 
       if (!statusDiv.querySelector(".robot-id-span")) {
         const span = document.createElement("span");
+        span.setAttribute(SCRIPT_ATTR, "true");
         span.className = "robot-id-span";
         span.textContent = robotId;
         span.style.fontWeight = "bold";
@@ -1700,6 +1820,7 @@ function processFourthCell(row) {
         button.style.transition = "background-color 0.3s";
         button.style.fontSize = "16px";
         button.style.fontWeight = "bold";
+        button.setAttribute(SCRIPT_ATTR, "true");
 
         button.addEventListener("mouseover", () => {
           button.style.opacity = "0.9";
@@ -1783,6 +1904,7 @@ function processFourthCell(row) {
         button.style.alignItems = "center";
         button.style.justifyContent = "center";
         button.style.transition = "background-color 0.3s";
+        button.setAttribute(SCRIPT_ATTR, "true");
 
         button.addEventListener("mouseover", () => {
           button.style.backgroundColor = "#515151";
@@ -1819,6 +1941,7 @@ function processFourthCell(row) {
         container.style.flexWrap = "wrap";
         container.style.gap = "8px";
         container.style.marginTop = "12px";
+        container.setAttribute(SCRIPT_ATTR, "true");
 
         buttonConfig.forEach(({ label, url }) => {
           const button = createButton(label, url);
@@ -1857,7 +1980,10 @@ function processFourthCell(row) {
     highlightSpareBots();
     highlightRows();
   }
-  setInterval(Setinterval, 2000);
+  masterInterval = setInterval(() => {
+    if (!SCRIPT_ENABLED) return;
+    Setinterval();
+  }, 2000);
 }
 
 function applyGlobalFailureHighlight() {
@@ -1867,6 +1993,7 @@ function applyGlobalFailureHighlight() {
         --bs-table-bg: #b93333 !important;
       }
     `;
+    style.setAttribute(SCRIPT_ATTR, "true");
   document.head.appendChild(style);
 }
 
@@ -1885,17 +2012,22 @@ function CreateHeaderRow() {
   const controlButton = document.createElement("button");
   controlButton.className = "activity_tableHeadButton__uGLCO";
   controlButton.textContent = "Controls";
+  controlButton.setAttribute(SCRIPT_ATTR, "true");
   controlHeader.appendChild(controlButton);
+  controlHeader.setAttribute(SCRIPT_ATTR, "true");
   theadRow.insertBefore(controlHeader, theadRow.firstChild);
 
   const headers = theadRow.querySelectorAll("th");
   const socHeader = document.createElement("th");
   const socButton = document.createElement("button");
+  socHeader.setAttribute(SCRIPT_ATTR, "true");
+  socButton.setAttribute(SCRIPT_ATTR, "true");
   socButton.id = "soc-sort-button";
   socButton.className = "activity_tableHeadButton__uGLCO";
   socButton.textContent = "SOC";
 
   const arrowSpan = document.createElement("span");
+  arrowSpan.setAttribute(SCRIPT_ATTR, "true");
   arrowSpan.className = "activity_directionArrow__FSdXF";
   arrowSpan.textContent = "↓";
   socButton.appendChild(arrowSpan);
@@ -1953,6 +2085,7 @@ function createPodButton(podName, container) {
   button.classList.add("pod-button");
   button.textContent = podName;
   button.classList.add("animated-button");
+  button.setAttribute(SCRIPT_ATTR, "true");
   applyButtonStyles(button);
 
   button.style.color = COLORS.backgroundDarker;
@@ -2007,6 +2140,7 @@ function createPodSelector(containerElement) {
   label.style.marginRight = "6px";
   label.style.color = COLORS.white;
   label.style.fontWeight = "500";
+  label.setAttribute(SCRIPT_ATTR, "true");
 
   const select = document.createElement("select");
   select.id = "pod-selector";
@@ -2019,11 +2153,13 @@ function createPodSelector(containerElement) {
   select.style.cursor = "pointer";
   select.style.outline = "none";
   select.style.boxShadow = `inset 0 1px 2px ${COLORS.black}`;
+  select.setAttribute(SCRIPT_ATTR, "true");
 
   ["3pod", "4pod", "5pod", "6pod", "7pod"].forEach((pod) => {
     const option = document.createElement("option");
     option.value = pod;
     option.textContent = pod.toUpperCase();
+    option.setAttribute(SCRIPT_ATTR, "true");
     if (pod === "4pod") option.selected = true;
     select.appendChild(option);
   });
@@ -2051,6 +2187,7 @@ function createTSButton(container) {
   button.textContent = "TS";
   button.classList.add("animated-button");
   button.classList.add("ts-button");
+  button.setAttribute(SCRIPT_ATTR, "true");
 
   applyButtonStyles(button);
 
@@ -2084,6 +2221,7 @@ function createIdleButton(container) {
   const button = document.createElement("button");
   button.textContent = "IDLE";
   button.classList.add("idle-button", "animated-button");
+  button.setAttribute(SCRIPT_ATTR, "true");
   applyButtonStyles(button);
 
   let isActive = false;
@@ -2140,6 +2278,7 @@ function createControlBarUI() {
   controlBar.style.top = "10px";
   controlBar.style.right = "20px";
   controlBar.style.zIndex = "1000";
+  controlBar.setAttribute(SCRIPT_ATTR, "true");
 
   createPodSelector(controlBar);
   createTSButton(controlBar);
@@ -2164,11 +2303,13 @@ function showNotification(message) {
     container.style.flexDirection = "column";
     container.style.alignItems = "center";
     container.style.gap = "10px";
+    container.setAttribute(SCRIPT_ATTR, "true");
     document.body.appendChild(container);
   }
 
   const notification = document.createElement("div");
   notification.innerText = message;
+  notification.setAttribute(SCRIPT_ATTR, "true");
 
   Object.assign(notification.style, {
     backgroundColor: "rgba(0, 0, 0, 0.8)",
@@ -2201,9 +2342,6 @@ function runOnceWhenActivityRowsExist(callback, delay = 1000) {
 
 runOnceWhenActivityRowsExist(() => {
   main();
-  createControlBarUI();
-  injectAnimations();
-
   setTimeout(() => {
     const headers = document.querySelectorAll("th");
     headers.forEach((th) => {

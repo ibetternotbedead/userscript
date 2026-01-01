@@ -1081,15 +1081,19 @@ function changeTimesColors(rowModels) {
 
 function redFailureColor() {
   if (document.querySelector(`style[${SCRIPT_ATTR}]`)) return;
+
   const style = document.createElement("style");
   style.setAttribute(SCRIPT_ATTR, "true");
+
   style.textContent = `
-    .activity_tableRow__qiRKF:has(div[title*="FAILED"]) {
+    tr:has(div[title*="FAILED"]) {
       --bs-table-bg: #b93333 !important;
     }
   `;
+
   document.head.appendChild(style);
 }
+
 
 function createHeaderRow() {
   const SCRIPT_NS = "insertedrow";
@@ -1325,16 +1329,18 @@ function createControlBarUI() {
   const SCRIPT_UI = "insertedui";
   if (document.querySelector(`[${SCRIPT_UI}]`)) return;
 
+  // Find Filters wrapper
+  const filterWrapper = document.querySelector(
+    '[class*="filterWrapper"]'
+  );
+  if (!filterWrapper) return;
+
+  // Remove logout column if present
   const logoutBtn = Array.from(document.querySelectorAll("button"))
     .find(b => b.textContent.trim().toLowerCase() === "log out");
 
   const logoutCol = logoutBtn?.closest(".col-2, .col");
   if (logoutCol) logoutCol.remove();
-
-  const headerRow = logoutBtn?.closest(".row.w-100")
-    || document.querySelector(".row.w-100");
-
-  if (!headerRow) return;
 
   const controlBar = document.createElement("div");
   controlBar.id = "control-bar";
@@ -1353,7 +1359,6 @@ function createControlBarUI() {
     fontFamily: "inherit",
     fontSize: "0.9rem",
     flexWrap: "wrap",
-    marginLeft: "auto",
     zIndex: "1000",
   });
 
@@ -1362,8 +1367,10 @@ function createControlBarUI() {
   createPodButtonsFromStructure(controlBar);
   createIdleButton(controlBar);
 
-  headerRow.appendChild(controlBar);
+  // 🔑 Insert to the LEFT of Filters
+  filterWrapper.parentElement.insertBefore(controlBar, filterWrapper);
 }
+
 
 
 function showNotification(message) {
@@ -1465,11 +1472,12 @@ function injectAnimations() {
   document.head.appendChild(style);
 }
 
-function applyAllFilters(rowModels, store) {
+function applyAllFilters(rowModels, store = DataStore) {
   if (!SCRIPT_ENABLED) return;
+  if (!store || !store.robots) return;
 
-  const { robots, derived, timers } = store;
-  const { elevator, busy, estop } = derived;
+  const { robots, derived = {}, timers = new Map() } = store;
+  const { elevator = new Set(), busy = new Set(), estop = new Set() } = derived;
 
   const podToSites = siteList.reduce((acc, site) => {
     const pod = site[filterState.selectedPodType];

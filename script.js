@@ -264,17 +264,6 @@ const siteList = [
     "7pod": "Pod E",
   },
   {
-    name: "Endeavor Highland Park",
-    number: "29",
-    projectX: "diligent-robotics",
-    env: "prod-2",
-    "3pod": "Pod B",
-    "4pod": "Pod B",
-    "5pod": "Pod B",
-    "6pod": "Pod B",
-    "7pod": "Pod E",
-  },
-  {
     name: "Mosaic St Joseph",
     number: "35",
     projectX: "diligent-robotics",
@@ -366,6 +355,7 @@ const COLORS = {
   safe: "#17ff5d",
   secondary: "#22616d",
   risk: "#ff7708",
+  boring: "#6c757d",
 };
 
 let permission = await Notification.requestPermission();
@@ -420,7 +410,6 @@ const PIPELINE = [
   () => injectAnimations(),
   () => insertSidebarLinks(),
 ];
-
 
 function runPipeline() {
   refreshTableContext();
@@ -523,7 +512,6 @@ function refreshTableContext() {
     TableContext.tbody.querySelectorAll("tr")
   ).filter(tr => tr.querySelectorAll("td").length >= 5);
 }
-
 
 function parseRow(row) {
   if (!row) return null;
@@ -766,7 +754,6 @@ function rearrangePhaseTime(rowModels) {
     }
   });
 }
-
 
 function insertElementsIntoRow(rowModels = TableContext.rows.map(parseRow)) {
   rowModels.forEach((rowModel) => {
@@ -1086,14 +1073,14 @@ function redFailureColor() {
   style.setAttribute(SCRIPT_ATTR, "true");
 
   style.textContent = `
-    tr:has(div[title*="FAILED"]) {
-      --bs-table-bg: #b93333 !important;
+    tr:has(div[title*="FAILED"]) > td {
+      background-color: #b93333 !important;
+      color: white !important; /* optional for contrast */
     }
   `;
 
   document.head.appendChild(style);
 }
-
 
 function createHeaderRow() {
   const SCRIPT_NS = "insertedrow";
@@ -1138,16 +1125,21 @@ function createHeaderRow() {
 
 function applyButtonStyles(btn) {
   btn.style.zIndex = 9999;
-  btn.style.padding = "10px 20px";
-  btn.style.backgroundColor = COLORS.primary;
+  btn.style.height = "40px";             
+  btn.style.lineHeight = "40px";       
+  btn.style.padding = "0 20px";         
+  btn.style.backgroundColor = COLORS.boring;
   btn.style.color = COLORS.white;
   btn.style.border = "none";
-  btn.style.borderRadius = "5px";
+  btn.style.borderRadius = "6px";
   btn.style.cursor = "pointer";
   btn.style.fontWeight = "bold";
-  btn.style.fontSize = "14px";
-  btn.style.boxShadow = "0px 2px 5px rgba(0,0,0,0.3)";
+  btn.style.fontSize = "16px";
+  btn.style.display = "inline-flex";    
+  btn.style.alignItems = "center";      
+  btn.style.justifyContent = "center";  
 }
+
 
 function createPodButton(podName, container) {
   const button = document.createElement("button");
@@ -1157,7 +1149,7 @@ function createPodButton(podName, container) {
   button.setAttribute(SCRIPT_ATTR, "true");
   applyButtonStyles(button);
 
-  button.style.color = COLORS.backgroundDarker;
+  button.style.color = COLORS.white;
 
   let isActive = false;
 
@@ -1168,13 +1160,13 @@ function createPodButton(podName, container) {
       button.classList.add("animated-button");
       button.style.backgroundColor = COLORS.secondary;
       button.style.border = `2px solid ${COLORS.secondary}`;
-      button.style.color = COLORS.backgroundDarker;
+      button.style.color = COLORS.white;
     } else {
       filterState.activePods.delete(podName);
       button.classList.add("animated-button");
-      button.style.backgroundColor = COLORS.primary;
+      button.style.backgroundColor = COLORS.boring;
       button.style.border = "none";
-      button.style.color = COLORS.backgroundDarker;
+      button.style.color = COLORS.white;
     }
     applyAllFilters();
   });
@@ -1184,7 +1176,7 @@ function createPodButton(podName, container) {
   });
 
   button.addEventListener("mouseout", () => {
-    if (!isActive) button.style.backgroundColor = COLORS.primary;
+    if (!isActive) button.style.backgroundColor = COLORS.boring;
   });
 
   container.appendChild(button);
@@ -1210,19 +1202,17 @@ function createPodSelector(containerElement) {
   label.style.marginRight = "6px";
   label.style.color = COLORS.white;
   label.style.fontWeight = "500";
+  label.style.fontSize = "16px";
   label.setAttribute(SCRIPT_ATTR, "true");
 
   const select = document.createElement("select");
   select.id = "pod-selector";
   select.style.padding = "4px 8px";
-  select.style.border = `1px solid ${COLORS.primary}`;
-  select.style.borderRadius = "4px";
-  select.style.backgroundColor = COLORS.secondary;
+  select.style.backgroundColor = COLORS.boring;
   select.style.color = COLORS.white;
   select.style.fontSize = "0.9rem";
   select.style.cursor = "pointer";
   select.style.outline = "none";
-  select.style.boxShadow = `inset 0 1px 2px ${COLORS.black}`;
   select.setAttribute(SCRIPT_ATTR, "true");
 
   ["3pod", "4pod", "5pod", "6pod", "7pod"].forEach((pod) => {
@@ -1262,13 +1252,13 @@ function createTSButton(container) {
   applyButtonStyles(button);
 
   button.style.position = "static";
-  button.style.color = COLORS.backgroundDarker;
+  button.style.color = COLORS.white;
 
   button.addEventListener("click", () => {
     filterState.tsOnly = !filterState.tsOnly;
     button.style.backgroundColor = filterState.tsOnly
       ? COLORS.secondary
-      : COLORS.primary;
+      : COLORS.boring;
     button.style.border = filterState.tsOnly
       ? `2px solid ${COLORS.secondary}`
       : "none";
@@ -1281,7 +1271,7 @@ function createTSButton(container) {
   });
 
   button.addEventListener("mouseout", () => {
-    if (!filterState.tsOnly) button.style.backgroundColor = COLORS.primary;
+    if (!filterState.tsOnly) button.style.backgroundColor = COLORS.boring;
   });
 
   container.appendChild(button);
@@ -1299,8 +1289,8 @@ function createIdleButton(container) {
   filterState.robotStatus = filterState.robotStatus || {};
   filterState.robotStatus.OVERRIDE = false;
 
-  button.style.backgroundColor = COLORS.primary;
-  button.style.color = COLORS.backgroundDarker;
+  button.style.backgroundColor = COLORS.boring;
+  button.style.color = COLORS.white;
   button.style.border = "none";
 
   button.addEventListener("click", () => {
@@ -1308,7 +1298,7 @@ function createIdleButton(container) {
 
     filterState.robotStatus.OVERRIDE = isActive;
 
-    button.style.backgroundColor = isActive ? COLORS.secondary : COLORS.primary;
+    button.style.backgroundColor = isActive ? COLORS.secondary : COLORS.boring;
     button.style.border = isActive ? `2px solid ${COLORS.secondary}` : "none";
 
     applyAllFilters();
@@ -1319,7 +1309,7 @@ function createIdleButton(container) {
   });
 
   button.addEventListener("mouseout", () => {
-    if (!isActive) button.style.backgroundColor = COLORS.primary;
+    if (!isActive) button.style.backgroundColor = COLORS.boring;
   });
 
   container.appendChild(button);
@@ -1329,13 +1319,11 @@ function createControlBarUI() {
   const SCRIPT_UI = "insertedui";
   if (document.querySelector(`[${SCRIPT_UI}]`)) return;
 
-  // Find Filters wrapper
   const filterWrapper = document.querySelector(
     '[class*="filterWrapper"]'
   );
   if (!filterWrapper) return;
 
-  // Remove logout column if present
   const logoutBtn = Array.from(document.querySelectorAll("button"))
     .find(b => b.textContent.trim().toLowerCase() === "log out");
 
@@ -1353,9 +1341,6 @@ function createControlBarUI() {
     gap: "12px",
     padding: "6px 12px",
     backgroundColor: COLORS.backgroundDarker,
-    border: `1px solid ${COLORS.secondary}`,
-    borderRadius: "6px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
     fontFamily: "inherit",
     fontSize: "0.9rem",
     flexWrap: "wrap",
@@ -1366,12 +1351,8 @@ function createControlBarUI() {
   createTSButton(controlBar);
   createPodButtonsFromStructure(controlBar);
   createIdleButton(controlBar);
-
-  // 🔑 Insert to the LEFT of Filters
   filterWrapper.parentElement.insertBefore(controlBar, filterWrapper);
 }
-
-
 
 function showNotification(message) {
   let container = document.getElementById("notification-container");
